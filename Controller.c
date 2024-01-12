@@ -10,7 +10,7 @@
 #include <wiringPi.h>
 
 #define RS485_ENABLE 12
-#define UART_DEVICE "/dev/serial0"
+#define UART_DEVICE "/dev/ttyAMA0"
 #define BUFFER_LEN  1024
 
 int SetupUart() {
@@ -21,7 +21,7 @@ int SetupUart() {
     };
     struct termios Options;
     tcgetattr(UartFileDescriptor, &Options);
-    Options.c_cflag = B9600 | CS8 | CLOCAL | CREAD; // Set baud rate, 8-bit data, local mode, enable receiver
+    Options.c_cflag = B115200 | CS8 | CLOCAL | CREAD; // Set baud rate, 8-bit data, local mode, enable receiver
     Options.c_iflag = IGNPAR; // Ignore parity errors
     Options.c_oflag = 0;
     Options.c_lflag = 0;
