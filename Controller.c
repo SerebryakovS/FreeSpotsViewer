@@ -7,7 +7,6 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <termios.h>
-#include <wiringPi.h>
 
 #define RS485_ENABLE 12
 #define UART_DEVICE "/dev/ttyAMA0"
@@ -38,9 +37,20 @@ int main() {
     if (UartFileDescriptor < 0) {
         return -EXIT_FAILURE;
     };
-    wiringPiSetupGpio();
-    pinMode(RS485_ENABLE, OUTPUT);
-    digitalWrite(RS485_ENABLE, LOW);
+    struct gpiod_chip *GpioChip;
+    struct gpiod_line *GpioLine;
+
+    GpioChip = gpiod_chip_open_by_name(GPIO_CHIP);
+    if (!GpioChip) {
+        perror("Open chip failed");
+        return -EXIT_FAILURE;
+    };
+    GpioLine = gpiod_chip_get_line(GpioChip, RS485_ENABLE);
+    if (!GpioLine) {
+        perror("Get line failed");
+        gpiod_chip_close(chip);
+        return -EXIT_FAILURE;
+    };
 
     char RX_Buffer[BUFFER_LEN];
     char TX_Buffer[BUFFER_LEN];
@@ -63,14 +73,16 @@ int main() {
             };
             if (FD_ISSET(STDIN_FILENO, &UartReadFileDescriptor)) {
                 if (fgets(TX_Buffer, BUFFER_LEN, stdin) != NULL) {
-                    digitalWrite(RS485_ENABLE, HIGH);
+                    gpiod_line_set_value(GpioLine, 1);
                     write(UartFileDescriptor, TX_Buffer, strlen(TX_Buffer));
                     usleep(1000);
-                    digitalWrite(RS485_ENABLE, LOW);
+                    gpiod_line_set_value(GpioLine, 0);
                 };
             };
         };
     };
+    gpiod_line_release(GpioLine);
+    gpiod_chip_close(GpioChip);
     close(UartFileDescriptor);
     return EXIT_SUCCESS;
-}
+};
