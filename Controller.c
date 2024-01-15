@@ -1,5 +1,5 @@
 
-// compilation: gcc FreeSpotsViewer/Controller.c -o out -lgpiod
+// compilation: gcc Controller.c -o out -lgpiod
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -23,7 +23,7 @@ int SetupUart() {
     };
     struct termios Options;
     tcgetattr(UartFileDescriptor, &Options);
-    Options.c_cflag = B115200 | CS8 | CLOCAL | CREAD; // Set baud rate, 8-bit data, local mode, enable receiver
+    Options.c_cflag = B9600 | CS8 | CLOCAL | CREAD; 
     Options.c_iflag = IGNPAR; // Ignore parity errors
     Options.c_oflag = 0;
     Options.c_lflag = 0;
@@ -71,7 +71,8 @@ int main() {
                 PacketLength = read(UartFileDescriptor, (void*)RX_Buffer, BUFFER_LEN);
                 if (PacketLength > 0) {
                     RX_Buffer[PacketLength] = '\0';
-                    printf("[..]: %s\n", RX_Buffer);
+                    printf("[%s][RX]: %s\n", TAG, RX_Buffer);
+                    tcflush(UartFileDescriptor, TCIFLUSH);
                 };
             };
             if (FD_ISSET(STDIN_FILENO, &UartReadFileDescriptor)) {
