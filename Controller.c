@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdbool.h>
 #include <fcntl.h>
 #include <termios.h>
 #include <gpiod.h>
@@ -58,8 +59,10 @@ int main() {
     gpiod_line_request_output(GpioLine, "REDE", 0);
     gpiod_line_set_value(GpioLine, 0);
 
-    char RX_Buffer[BUFFER_LEN];
-    char TX_Buffer[BUFFER_LEN];
+    char RX_Buffer[BUFFER_LEN]; memset(RX_Buffer, 0, BUFFER_LEN);
+    char TX_Buffer[BUFFER_LEN]; memset(TX_Buffer, 0, BUFFER_LEN);
+    int RX_Index = 0, bool JsonStart = false;
+
     printf("[%s][OK]: Running main monitor loop..\n",TAG);
     while (1) {
         FD_ZERO(&UartReadFileDescriptor);
@@ -73,13 +76,25 @@ int main() {
                 char TempBuffer[256];
                 int BytesRead = read(UartFileDescriptor, TempBuffer, sizeof(TempBuffer) - 1);
                 if (BytesRead > 0) {
-                    TempBuffer[bytesRead] = '\0';
+                    TempBuffer[BytesRead] = '\0';
                     for (int Idx = 0; Idx < BytesRead; ++Idx) {
-                        RX_Buffer[RX_Index++] = TempBuffer[Idx];
-                        if (TempBuffer[Idx] == '}') {
-                            RX_Buffer[RX_Index] = '\0';
-                            printf("[%s][RX]: %s\n", TAG, RX_Buffer);
+                        if (TempBuffer[Idx] == '{') {
+                            JsonStart = true;
                             RX_Index = 0;
+                        };
+                        if (JsonStart) {
+                            RX_Buffer[RX_Index++] = TempBuffer[Idx];
+                            if (TempBuffer[Idx] == '}') {
+                                RX_Buffer[RX_Index] = '\0';
+                                printf("[%s][RX]: %s\n", TAG, RX_Buffer);
+                                JsonStart = false;
+                                memset(RX_Buffer, 0, BUFFER_LEN);
+                                RX_Index = 0; 
+                            };
+                        };
+                        if (RX_Index >= BUFFER_LEN) {
+                            RX_Index = 0;
+                            JsonStart = false;
                             memset(RX_Buffer, 0, BUFFER_LEN);
                         };
                     };
