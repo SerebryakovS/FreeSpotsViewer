@@ -23,7 +23,7 @@ int SetupUart() {
     };
     struct termios Options;
     tcgetattr(UartFileDescriptor, &Options);
-    Options.c_cflag = B9600 | CS8 | CLOCAL | CREAD; 
+    Options.c_cflag = B115200 | CS8 | CLOCAL | CREAD; 
     Options.c_iflag = IGNPAR; // Ignore parity errors
     Options.c_oflag = 0;
     Options.c_lflag = 0;
@@ -42,6 +42,7 @@ int main() {
     };
     struct gpiod_chip *GpioChip;
     struct gpiod_line *GpioLine;
+    struct gpiod_line_request_config GpioLineConfig;
 
     GpioChip = gpiod_chip_open_by_name("gpiochip0");
     if (!GpioChip) {
@@ -54,11 +55,11 @@ int main() {
         gpiod_chip_close(GpioChip);
         return -EXIT_FAILURE;
     };
+    gpiod_line_request_output(GpioLine, "REDE", 0);
     gpiod_line_set_value(GpioLine, 0);
 
     char RX_Buffer[BUFFER_LEN];
     char TX_Buffer[BUFFER_LEN];
-    int PacketLength;
     printf("[%s][OK]: Running main monitor loop..\n",TAG);
     while (1) {
         FD_ZERO(&UartReadFileDescriptor);
@@ -69,12 +70,21 @@ int main() {
 
         if (select(UartFileDescriptor + 1, &UartReadFileDescriptor, NULL, NULL, &Timeout) > 0) {
             if (FD_ISSET(UartFileDescriptor, &UartReadFileDescriptor)) {
-                PacketLength = read(UartFileDescriptor, (void*)RX_Buffer, BUFFER_LEN);
-                if (PacketLength > 0) {
-                    RX_Buffer[PacketLength] = '\0';
-                    printf("[%s][RX]: %s\n", TAG, RX_Buffer);
-                    tcflush(UartFileDescriptor, TCIFLUSH);
+                char TempBuffer[256];
+                int BytesRead = read(UartFileDescriptor, TempBuffer, sizeof(TempBuffer) - 1);
+                if (BytesRead > 0) {
+                    TempBuffer[bytesRead] = '\0';
+                    for (int Idx = 0; Idx < BytesRead; ++Idx) {
+                        RX_Buffer[RX_Index++] = TempBuffer[Idx];
+                        if (TempBuffer[Idx] == '}') {
+                            RX_Buffer[RX_Index] = '\0';
+                            printf("[%s][RX]: %s\n", TAG, RX_Buffer);
+                            RX_Index = 0;
+                            memset(RX_Buffer, 0, BUFFER_LEN);
+                        };
+                    };
                 };
+                tcflush(UartFileDescriptor, TCIFLUSH);
             };
             if (FD_ISSET(STDIN_FILENO, &UartReadFileDescriptor)) {
                 if (fgets(TX_Buffer, BUFFER_LEN, stdin) != NULL) {
