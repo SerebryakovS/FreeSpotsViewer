@@ -54,6 +54,7 @@ int main() {
         gpiod_chip_close(GpioChip);
         return -EXIT_FAILURE;
     };
+    gpiod_line_set_value(GpioLine, 0);
 
     char RX_Buffer[BUFFER_LEN];
     char TX_Buffer[BUFFER_LEN];
