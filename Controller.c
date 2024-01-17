@@ -61,10 +61,15 @@ int main() {
 
     char RX_Buffer[BUFFER_LEN]; memset(RX_Buffer, 0, BUFFER_LEN);
     char TX_Buffer[BUFFER_LEN]; memset(TX_Buffer, 0, BUFFER_LEN);
-    int RX_Index = 0, bool JsonStart = false;
-
+    int RX_Index = 0; bool JsonStart = false;
+    char Cmd[32];
     printf("[%s][OK]: Running main monitor loop..\n",TAG);
     while (1) {
+        scanf("[SpotTrack]: >>%s",&Cmd);
+        if (strlen(Cmd) > 0){
+            
+        };
+
         FD_ZERO(&UartReadFileDescriptor);
         FD_SET(UartFileDescriptor, &UartReadFileDescriptor);
         FD_SET(STDIN_FILENO, &UartReadFileDescriptor);
