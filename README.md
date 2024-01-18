@@ -11,70 +11,29 @@ Maximum delay for devices: 256 * 30[ms] = 7680[ms];
 ### RS-485 API
 
 #### get_status
-request body:
 ```
-{
-    "type" : "get_status"
-    "uid" : "..."
-}
-```
-response body:
-```
-{
-    "uid" : "...",
-    "threshold" : ...,
-    "measured_1" : ...,
-    "measured_2" : ...,
-    "is_parking_clear" : true | false
-}
-```
-example:
-```
->{"type":"get_status", "uid":"34FF7206504E393854410243"}
-{"type":"get_status", "uid":"34FF6E06504E393817500343"}
-
-<
+[SpotTrack][TX]: {"uid":"34FF7206504E393854410243","type":"get_status"}
+[SpotTrack][RX]: {"uid":"34FF7206504E393854410243","threshold":1000,"measured_1":1230,"measured_2":   0,"is_parking_clear":true}
 ```
 #### ping
-request body:
 ```
-{
-    "type" : "ping"
-    "uid" : "..."
-}
+[SpotTrack][TX]: {"uid":"34FF7206504E393854410243","type":"ping"}
+[SpotTrack][RX]: {"uid":"34FF7206504E393854410243"}
 ```
 #### set_working_mode
-request body:
 ```
-{
-    "type" : "set_mode"
-    "uid" : "...",
-    "is_auto" : true | false
-}
+[SpotTrack][TX]: {"uid":"34FF7206504E393854410243","type":"set_working_mode","is_auto" : false}
+[SpotTrack][RX]: {"uid":"34FF7206504E393854410243"}
 ```
 #### set_threshold
-request body:
 ```
-{
-    "type" : "set_threshold"
-    "uid" : "...",
-    "threshold" : ...
-}
+[SpotTrack][TX]: {"uid":"34FF7206504E393854410243","type":"set_threshold","is_auto" : 500}
+[SpotTrack][RX]: {"uid":"34FF7206504E393854410243"}
 ```
 #### set_parked
-request body:
 ```
-{
-    "type" : "set_parked"
-    "uid" : "...",
-    "is_parked_set" : true | false
-}
-```
-for all above requests, response body is:
-```
-{
-    "uid" : "..."
-}
+[SpotTrack][TX]: {"uid":"34FF7206504E393854410243","type":"set_parked","is_parked_set" : true}
+[SpotTrack][RX]: {"uid":"34FF7206504E393854410243"}
 ```
 
 ### Rest API
@@ -92,6 +51,7 @@ response body:
 response body:
 ```
 {
+    "device_uid" : "...",
     "threshold" : ...,
     "measured_1" : ...,
     "measured_2" : ...,
@@ -102,13 +62,12 @@ response body:
 request body:
 ```
 {
-    "device_uid" : "...",
-    "value" : true | false
+    "device_uid" : "..."
 }
 ```
 response body:
 ```
 {
-    "is_parking_clear" : true | false
+    "device_uid" : "..."
 }
 ```

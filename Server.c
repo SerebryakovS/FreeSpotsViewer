@@ -2,13 +2,42 @@
 #include "SpotTrack.h"
 #include <microhttpd.h>
 
+char WebResponseBuffer[WEB_RESPONSE_SIZE];
+
 const char* GetListOfDevices() {
-    return "{\"list_devices\":[\"device_uid_1\",\"device_uid_2\"]}";
+    FILE *KnownDevices = fopen("KnownDevices.json", "r");
+    if (!KnownDevices) {
+        snprintf(WebResponseBuffer, WEB_RESPONSE_SIZE, "{\"error\":\"FILE_ERR\"}");
+        return WebResponseBuffer;
+    };
+    memset(WebResponseBuffer, 0, sizeof(WebResponseBuffer));
+    size_t BytesRead = fread(WebResponseBuffer, 1, WEB_RESPONSE_SIZE - 1, KnownDevices);
+    fclose(KnownDevices);
+    if (BytesRead == 0) {
+        snprintf(WebResponseBuffer, WEB_RESPONSE_SIZE, "{\"error\":\"READ_ERR\"}");
+        return WebResponseBuffer;
+    };
+    WebResponseBuffer[BytesRead] = '\0';
+    return WebResponseBuffer;
 };
 
 const char* GetDeviceStatus(const char* DeviceUid) {
-    return "{\"threshold\":10,\"measured_1\":20,\"measured_2\":30,\"is_parking_clear\":true}";
-};
+    char Rs485Cmd[256];
+    snprintf(Rs485Cmd, sizeof(Rs485Cmd), "{\"uid\":\"%s\",\"type\":\"get_status\"}", DeviceUid);
+    write(Rs485WriteFd, Rs485Cmd, strlen(Rs485Cmd));
+    sleep(1);
+    memset(WebResponseBuffer, 0, sizeof(WebResponseBuffer));
+    int BytesRead = read(Rs485ReadFd, WebResponseBuffer, sizeof(WebResponseBuffer) - 1);
+    if (BytesRead > 0) {
+        buffer[BytesRead] = '\0';
+        return WebResponseBuffer;
+    } else if (BytesRead < 0 && errno != EAGAIN && errno != EWOULDBLOCK) {
+        snprintf(WebResponseBuffer, WEB_RESPONSE_SIZE, "{\"error\":\"READ_ERR\"}");
+    } else {
+        snprintf(WebResponseBuffer, WEB_RESPONSE_SIZE, "{\"error\":\"NO_DATA\"}");
+    };
+    return WebResponseBuffer;
+}
 
 const char* SetDeviceParked(const char* DeviceUid) {
     return "{\"is_parking_clear\":false}";
@@ -42,7 +71,7 @@ static int HandlePostRequest(const struct MHD_Connection *Connection, const char
     return ReturnValue;
 };
 
-static int AnswerToConnection(void *Cls, struct MHD_Connection *Connection,
+static int AnswerToWebRequest(void *Cls, struct MHD_Connection *Connection,
                               const char *Url, const char *Method,
                               const char *Version, const char *UploadData,
                               size_t *UploadDataSize, void **ConCls) {
