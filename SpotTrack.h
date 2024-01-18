@@ -5,6 +5,7 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 
 #define REST_PORT         16333
 #define PRINT_TAG         "SpotTrack"
@@ -17,8 +18,5 @@
 
 int Rs485ReadFd, Rs485WriteFd, UartFd;
 
-static int AnswerToWebRequest(void *Cls, struct MHD_Connection *Connection,
-                              const char *Url, const char *Method,
-                              const char *Version, const char *UploadData,
-                              size_t *UploadDataSize, void **ConCls)
 int RunControllerOnly(int ReadFd, int WriteFd);
+void RunWebServer( void );

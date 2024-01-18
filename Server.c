@@ -29,7 +29,7 @@ const char* GetDeviceStatus(const char* DeviceUid) {
     memset(WebResponseBuffer, 0, sizeof(WebResponseBuffer));
     int BytesRead = read(Rs485ReadFd, WebResponseBuffer, sizeof(WebResponseBuffer) - 1);
     if (BytesRead > 0) {
-        buffer[BytesRead] = '\0';
+        WebResponseBuffer[BytesRead] = '\0';
         return WebResponseBuffer;
     } else if (BytesRead < 0 && errno != EAGAIN && errno != EWOULDBLOCK) {
         snprintf(WebResponseBuffer, WEB_RESPONSE_SIZE, "{\"error\":\"READ_ERR\"}");
@@ -82,3 +82,22 @@ static int AnswerToWebRequest(void *Cls, struct MHD_Connection *Connection,
     };
     return MHD_NO;
 };
+
+void RunWebServer(){
+        struct MHD_Daemon *Daemon = MHD_start_daemon(MHD_USE_INTERNAL_POLLING_THREAD, REST_PORT, 
+                                                     NULL, NULL, &AnswerToWebRequest, NULL, 
+                                                     MHD_OPTION_END);
+        if (NULL == Daemon){ 
+            return -EXIT_FAILURE;
+        };
+        printf("Server running on port %d\n", REST_PORT);
+
+        int PipeFds[2];
+        if (pipe(PipeFds) == -1) {
+            return -EXIT_FAILURE; 
+        };
+        Rs485ReadFd  = UartFd;
+        Rs485WriteFd = PipeFds[1];
+        RunRs485Controller(Rs485ReadFd, Rs485WriteFd);
+        MHD_stop_daemon(Daemon);
+}

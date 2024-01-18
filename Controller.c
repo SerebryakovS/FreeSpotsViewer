@@ -1,6 +1,4 @@
 
-// compilation: gcc Controller.c -o out -lgpiod
-
 #include "SpotTrack.h"
 #include <termios.h>
 #include <gpiod.h>
