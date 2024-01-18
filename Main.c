@@ -1,7 +1,9 @@
 
 #include "SpotTrack.h"
 
-// compilation: gcc Controller.c Server.c SpotTrack.h -o out -lgpiod -lmicrohttpd
+// compilation: gcc Main.c Controller.c Server.c SpotTrack.h -o out -lgpiod -lmicrohttpd
+
+int Rs485ReadFd, Rs485WriteFd, UartFd;
 
 int main(int argc, char *argv[]) {
     UartFd = SetupUart();
@@ -12,11 +14,11 @@ int main(int argc, char *argv[]) {
         };
         Rs485ReadFd  = UartFd;
         Rs485WriteFd = PipeFds[1];
-        RunWebServer();
+        return RunWebServer();
     } else if (argc > 1 && strcmp(argv[1], "debug") == 0) {
         Rs485ReadFd = -1;
         Rs485WriteFd = -1;
-        RunRs485Controller();
+        return RunRs485Controller();
     };
     return EXIT_SUCCESS;
 }

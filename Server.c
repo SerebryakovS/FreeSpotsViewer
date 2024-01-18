@@ -83,7 +83,7 @@ static int AnswerToWebRequest(void *Cls, struct MHD_Connection *Connection,
     return MHD_NO;
 };
 
-void RunWebServer(){
+int RunWebServer(){
         struct MHD_Daemon *Daemon = MHD_start_daemon(MHD_USE_INTERNAL_POLLING_THREAD, REST_PORT, 
                                                      NULL, NULL, &AnswerToWebRequest, NULL, 
                                                      MHD_OPTION_END);
@@ -91,7 +91,6 @@ void RunWebServer(){
             return -EXIT_FAILURE;
         };
         printf("Server running on port %d\n", REST_PORT);
-
-        RunRs485Controller(Rs485ReadFd, Rs485WriteFd);
+        RunRs485Controller();
         MHD_stop_daemon(Daemon);
 }

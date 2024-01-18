@@ -19,4 +19,4 @@
 extern int Rs485ReadFd, Rs485WriteFd, UartFd;
 
 int RunRs485Controller( void );
-void RunWebServer( void );
+int RunWebServer( void );
