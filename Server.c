@@ -23,18 +23,22 @@ const char* GetListOfDevices() {
 
 const char* GetDeviceStatus(const char* DeviceUid) {
     char Rs485Cmd[256];
-    snprintf(Rs485Cmd, sizeof(Rs485Cmd), "{\"uid\":\"%s\",\"type\":\"get_status\"}", DeviceUid);
-    write(Rs485WriteFd, Rs485Cmd, strlen(Rs485Cmd));
-    sleep(1);
-    memset(WebResponseBuffer, 0, sizeof(WebResponseBuffer));
-    int BytesRead = read(Rs485ReadFd, WebResponseBuffer, sizeof(WebResponseBuffer) - 1);
-    if (BytesRead > 0) {
-        WebResponseBuffer[BytesRead] = '\0';
-        return WebResponseBuffer;
-    } else if (BytesRead < 0 && errno != EAGAIN && errno != EWOULDBLOCK) {
-        snprintf(WebResponseBuffer, WEB_RESPONSE_SIZE, "{\"error\":\"READ_ERR\"}");
+    snprintf(Rs485Cmd, sizeof(Rs485Cmd), "{\"uid\":\"%s\",\"type\":\"get_status\"}\n", DeviceUid);
+    int BytesRead = write(Rs485WriteFd, Rs485Cmd, strlen(Rs485Cmd));
+    if (BytesRead <= 0) {
+        snprintf(WebResponseBuffer, WEB_RESPONSE_SIZE, "{\"error\":\"WRITE_ERR\"}");
     } else {
-        snprintf(WebResponseBuffer, WEB_RESPONSE_SIZE, "{\"error\":\"NO_DATA\"}");
+        sleep(1);
+        memset(WebResponseBuffer, 0, sizeof(WebResponseBuffer));
+        int BytesRead = read(Rs485ReadFd, WebResponseBuffer, sizeof(WebResponseBuffer) - 1);
+        if (BytesRead > 0) {
+            WebResponseBuffer[BytesRead] = '\0';
+            return WebResponseBuffer;
+        } else if (BytesRead < 0 && errno != EAGAIN && errno != EWOULDBLOCK) {
+            snprintf(WebResponseBuffer, WEB_RESPONSE_SIZE, "{\"error\":\"READ_ERR\"}");
+        } else {
+            snprintf(WebResponseBuffer, WEB_RESPONSE_SIZE, "{\"error\":\"NO_DATA\"}");
+        };
     };
     return WebResponseBuffer;
 }

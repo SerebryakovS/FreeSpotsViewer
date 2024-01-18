@@ -62,7 +62,7 @@ int RunRs485Controller( void ) {
         Timeout.tv_sec = 3;
         Timeout.tv_usec = 0;
         if (select(UartFd + 1, &UartReadFd, NULL, NULL, &Timeout) > 0) {
-            if (InputFdUsed == -1){
+            if (Rs485WriteFd == -1){
                 if (FD_ISSET(UartFd, &UartReadFd)) {
                     char TempBuffer[256];
                     int BytesRead = read(UartFd, TempBuffer, sizeof(TempBuffer) - 1);
