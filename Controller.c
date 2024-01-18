@@ -1,20 +1,14 @@
 
 // compilation: gcc Controller.c -o out -lgpiod
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <stdbool.h>
-#include <fcntl.h>
+#include "SpotTrack.h"
 #include <termios.h>
 #include <gpiod.h>
 
 #define RS485_ENABLE 12
 #define UART_DEVICE "/dev/ttyAMA0"
 #define BUFFER_LEN  1024
-
-char *TAG = "SpotTrack";
+#define TX_DELAY    5000
 
 int SetupUart() {
     int UartFileDescriptor = open(UART_DEVICE, O_RDWR | O_NOCTTY | O_NDELAY);
@@ -59,17 +53,18 @@ int main() {
     gpiod_line_request_output(GpioLine, "REDE", 0);
     gpiod_line_set_value(GpioLine, 0);
 
+    // Set STDIN in non-blocking mode
+    int Flags = fcntl(STDIN_FILENO, F_GETFL, 0);
+    fcntl(STDIN_FILENO, F_SETFL, Flags | O_NONBLOCK);
+
+    int RX_Index = 0;
+
     char RX_Buffer[BUFFER_LEN]; memset(RX_Buffer, 0, BUFFER_LEN);
     char TX_Buffer[BUFFER_LEN]; memset(TX_Buffer, 0, BUFFER_LEN);
     int RX_Index = 0; bool JsonStart = false;
     char Cmd[32];
-    printf("[%s][OK]: Running main monitor loop..\n",TAG);
+    printf("[%s][OK]: Running main monitor loop..\n", PRINT_TAG);
     while (1) {
-        scanf("[SpotTrack]: >>%s",&Cmd);
-        if (strlen(Cmd) > 0){
-            
-        };
-
         FD_ZERO(&UartReadFileDescriptor);
         FD_SET(UartFileDescriptor, &UartReadFileDescriptor);
         FD_SET(STDIN_FILENO, &UartReadFileDescriptor);
@@ -91,7 +86,7 @@ int main() {
                             RX_Buffer[RX_Index++] = TempBuffer[Idx];
                             if (TempBuffer[Idx] == '}') {
                                 RX_Buffer[RX_Index] = '\0';
-                                printf("[%s][RX]: %s\n", TAG, RX_Buffer);
+                                printf("[%s][RX]: %s\n", PRINT_TAG, RX_Buffer);
                                 JsonStart = false;
                                 memset(RX_Buffer, 0, BUFFER_LEN);
                                 RX_Index = 0; 
@@ -104,13 +99,16 @@ int main() {
                         };
                     };
                 };
-                tcflush(UartFileDescriptor, TCIFLUSH);
             };
             if (FD_ISSET(STDIN_FILENO, &UartReadFileDescriptor)) {
-                if (fgets(TX_Buffer, BUFFER_LEN, stdin) != NULL) {
+                int BytesRead = read(STDIN_FILENO, TX_Buffer, sizeof(TX_Buffer) - 1);
+                if (BytesRead > 0) {
+                    TX_Buffer[BytesRead] = '\0';
+                    tcflush(UartFileDescriptor, TCIFLUSH);
+                    printf("[%s]: Writing to RS-485: %s, of length: %d\n", TAG, TX_Buffer, strlen(TX_Buffer));
                     gpiod_line_set_value(GpioLine, 1);
                     write(UartFileDescriptor, TX_Buffer, strlen(TX_Buffer));
-                    usleep(1000);
+                    usleep(TX_DELAY);
                     gpiod_line_set_value(GpioLine, 0);
                 };
             };

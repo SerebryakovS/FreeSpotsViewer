@@ -1,9 +1,6 @@
-#include <microhttpd.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
 
-#define PORT 16333
+#include "SpotTrack.h"
+#include <microhttpd.h>
 
 const char* GetListOfDevices() {
     return "{\"list_devices\":[\"device_uid_1\",\"device_uid_2\"]}";
@@ -56,16 +53,3 @@ static int AnswerToConnection(void *Cls, struct MHD_Connection *Connection,
     };
     return MHD_NO;
 };
-
-int main() {
-    struct MHD_Daemon *Daemon = MHD_start_daemon(MHD_USE_INTERNAL_POLLING_THREAD, PORT, 
-                                                 NULL, NULL, &AnswerToConnection, NULL, 
-                                                 MHD_OPTION_END);
-    if (NULL == Daemon){ 
-        return -EXIT_FAILURE;
-    };
-    printf("Server running on port %d\n", PORT);
-    getchar();
-    MHD_stop_daemon(Daemon);
-    return EXIT_SUCCESS;
-}
