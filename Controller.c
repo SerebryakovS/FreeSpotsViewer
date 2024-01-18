@@ -4,28 +4,27 @@
 #include <gpiod.h>
 
 int SetupUart() {
-    int UartFileDescriptor = open(RS485_UART_DEVICE, O_RDWR | O_NOCTTY | O_NDELAY);
-    if (UartFileDescriptor == -1) {
+    int _UartFd = open(RS485_UART_DEVICE, O_RDWR | O_NOCTTY | O_NDELAY);
+    if (_UartFd == -1) {
         perror("Unable to open UART");
         return -EXIT_FAILURE;
     };
     struct termios Options;
-    tcgetattr(UartFileDescriptor, &Options);
+    tcgetattr(_UartFd, &Options);
     Options.c_cflag = B115200 | CS8 | CLOCAL | CREAD; 
     Options.c_iflag = IGNPAR; // Ignore parity errors
     Options.c_oflag = 0;
     Options.c_lflag = 0;
-    tcflush(UartFileDescriptor, TCIFLUSH);
-    tcsetattr(UartFileDescriptor, TCSANOW, &Options);
-    return UartFileDescriptor;
+    tcflush(_UartFd, TCIFLUSH);
+    tcsetattr(_UartFd, TCSANOW, &Options);
+    return _UartFd;
 };
 
-int RunControllerOnly(int ReadFd, int WriteFd) {
+int RunRs485Controller( void ) {
     fd_set UartReadFd;
     struct timeval Timeout;
-
-    int UartFileDescriptor = SetupUart();
-    if (UartFileDescriptor < 0) {
+    UartFd = SetupUart();
+    if (UartFd < 0) {
         return -EXIT_FAILURE;
     };
     struct gpiod_chip *GpioChip;
@@ -46,11 +45,10 @@ int RunControllerOnly(int ReadFd, int WriteFd) {
     gpiod_line_request_output(GpioLine, "REDE", 0);
     gpiod_line_set_value(GpioLine, 0);
 
-    int ReadFdUsed = ReadFd != -1 ? ReadFd : STDIN_FILENO;
+    int InputFdUsed = Rs485WriteFd != -1 ? Rs485WriteFd : STDIN_FILENO;
 
-
-    int Flags = fcntl(ReadFdUsed, F_GETFL, 0);
-    fcntl(ReadFdUsed, F_SETFL, Flags | O_NONBLOCK);
+    int Flags = fcntl(InputFdUsed, F_GETFL, 0);
+    fcntl(InputFdUsed, F_SETFL, Flags | O_NONBLOCK);
 
     char RX_Buffer[RS485_BUFFER_LEN]; memset(RX_Buffer, 0, RS485_BUFFER_LEN);
     char TX_Buffer[RS485_BUFFER_LEN]; memset(TX_Buffer, 0, RS485_BUFFER_LEN);
@@ -60,11 +58,11 @@ int RunControllerOnly(int ReadFd, int WriteFd) {
     while (1) {
         FD_ZERO(&UartReadFd);
         FD_SET(UartFd, &UartReadFd);
-        FD_SET(ReadFdUsed, &UartReadFd);
+        FD_SET(InputFdUsed, &UartReadFd);
         Timeout.tv_sec = 3;
         Timeout.tv_usec = 0;
         if (select(UartFd + 1, &UartReadFd, NULL, NULL, &Timeout) > 0) {
-            if (ReadFdUsed == -1){
+            if (InputFdUsed == -1){
                 if (FD_ISSET(UartFd, &UartReadFd)) {
                     char TempBuffer[256];
                     int BytesRead = read(UartFd, TempBuffer, sizeof(TempBuffer) - 1);
@@ -94,8 +92,8 @@ int RunControllerOnly(int ReadFd, int WriteFd) {
                     };
                 };
             };
-            if (FD_ISSET(ReadFdUsed, &UartReadFd)) {
-                int BytesRead = read(ReadFdUsed, TX_Buffer, sizeof(TX_Buffer) - 1);
+            if (FD_ISSET(InputFdUsed, &UartReadFd)) {
+                int BytesRead = read(InputFdUsed, TX_Buffer, sizeof(TX_Buffer) - 1);
                 if (BytesRead > 0) {
                     TX_Buffer[BytesRead] = '\0';
                     tcflush(UartFd, TCIFLUSH);

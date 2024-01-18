@@ -92,12 +92,6 @@ void RunWebServer(){
         };
         printf("Server running on port %d\n", REST_PORT);
 
-        int PipeFds[2];
-        if (pipe(PipeFds) == -1) {
-            return -EXIT_FAILURE; 
-        };
-        Rs485ReadFd  = UartFd;
-        Rs485WriteFd = PipeFds[1];
         RunRs485Controller(Rs485ReadFd, Rs485WriteFd);
         MHD_stop_daemon(Daemon);
 }
