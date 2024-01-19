@@ -22,6 +22,11 @@ int SetupUart() {
 
 int RunRs485Controller( void ) {
     fd_set UartReadFd;
+    UartFd = SetupUart();
+    if (UartFd < 0) {
+        return -EXIT_FAILURE;
+    };
+    
     struct timeval Timeout;
     struct gpiod_chip *GpioChip;
     struct gpiod_line *GpioLine;
@@ -43,8 +48,8 @@ int RunRs485Controller( void ) {
 
     int InputFdUsed = WebToRs485ReadFd != -1 ? WebToRs485ReadFd : STDIN_FILENO;
 
-    int Flags = fcntl(InputFdUsed, F_GETFL, 0);
-    fcntl(InputFdUsed, F_SETFL, Flags | O_NONBLOCK);
+    //int Flags = fcntl(InputFdUsed, F_GETFL, 0);
+    //fcntl(InputFdUsed, F_SETFL, Flags | O_NONBLOCK);
 
     char RX_Buffer[RS485_BUFFER_LEN]; memset(RX_Buffer, 0, RS485_BUFFER_LEN);
     char TX_Buffer[RS485_BUFFER_LEN]; memset(TX_Buffer, 0, RS485_BUFFER_LEN);
@@ -55,9 +60,9 @@ int RunRs485Controller( void ) {
         FD_ZERO(&UartReadFd);
         FD_SET(UartFd, &UartReadFd);
         FD_SET(InputFdUsed, &UartReadFd);
-        Timeout.tv_sec = 3;
-        Timeout.tv_usec = 0;
-        if (select(UartFd + 1, &UartReadFd, NULL, NULL, &Timeout) > 0) {
+        //Timeout.tv_sec = 3;
+        //Timeout.tv_usec = 0;
+        if (select(UartFd + 1, &UartReadFd, NULL, NULL, NULL) > 0{ //&Timeout) > 0) {
             if (WebToRs485ReadFd == -1){
                 if (FD_ISSET(UartFd, &UartReadFd)) {
                     char TempBuffer[256];

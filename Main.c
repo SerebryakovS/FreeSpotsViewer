@@ -6,10 +6,7 @@
 int WebToRs485ReadFd, WebToRs485WriteFd, UartFd;
 
 int main(int argc, char *argv[]) {
-    UartFd = SetupUart();
-    if (UartFd < 0) {
-        return -EXIT_FAILURE;
-    };
+
     if (argc == 1) {
         int PipeFds[2];
         if (pipe(PipeFds) == -1) {
