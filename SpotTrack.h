@@ -16,7 +16,7 @@
 #define RS485_TX_DELAY    10000
 #define WEB_RESPONSE_SIZE 1024
 
-extern int Rs485ReadFd, Rs485WriteFd, UartFd;
+extern int WebToRs485ReadFd, WebToRs485WriteFd, UartFd;
 
 int RunRs485Controller( void );
 int RunWebServer( void );

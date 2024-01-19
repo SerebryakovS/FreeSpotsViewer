@@ -23,10 +23,6 @@ int SetupUart() {
 int RunRs485Controller( void ) {
     fd_set UartReadFd;
     struct timeval Timeout;
-    UartFd = SetupUart();
-    if (UartFd < 0) {
-        return -EXIT_FAILURE;
-    };
     struct gpiod_chip *GpioChip;
     struct gpiod_line *GpioLine;
     struct gpiod_line_request_config GpioLineConfig;
@@ -45,7 +41,7 @@ int RunRs485Controller( void ) {
     gpiod_line_request_output(GpioLine, "REDE", 0);
     gpiod_line_set_value(GpioLine, 0);
 
-    int InputFdUsed = Rs485WriteFd != -1 ? Rs485WriteFd : STDIN_FILENO;
+    int InputFdUsed = WebToRs485ReadFd != -1 ? WebToRs485ReadFd : STDIN_FILENO;
 
     int Flags = fcntl(InputFdUsed, F_GETFL, 0);
     fcntl(InputFdUsed, F_SETFL, Flags | O_NONBLOCK);
@@ -62,7 +58,7 @@ int RunRs485Controller( void ) {
         Timeout.tv_sec = 3;
         Timeout.tv_usec = 0;
         if (select(UartFd + 1, &UartReadFd, NULL, NULL, &Timeout) > 0) {
-            if (Rs485WriteFd == -1){
+            if (WebToRs485ReadFd == -1){
                 if (FD_ISSET(UartFd, &UartReadFd)) {
                     char TempBuffer[256];
                     int BytesRead = read(UartFd, TempBuffer, sizeof(TempBuffer) - 1);

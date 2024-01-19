@@ -24,13 +24,13 @@ const char* GetListOfDevices() {
 const char* GetDeviceStatus(const char* DeviceUid) {
     char Rs485Cmd[256];
     snprintf(Rs485Cmd, sizeof(Rs485Cmd), "{\"uid\":\"%s\",\"type\":\"get_status\"}\n", DeviceUid);
-    int BytesRead = write(Rs485WriteFd, Rs485Cmd, strlen(Rs485Cmd));
-    if (BytesRead <= 0) {
+    int BytesWrite = write(WebToRs485WriteFd, Rs485Cmd, strlen(Rs485Cmd));
+    if (BytesWrite <= 0) {
         snprintf(WebResponseBuffer, WEB_RESPONSE_SIZE, "{\"error\":\"WRITE_ERR\"}");
     } else {
         sleep(1);
         memset(WebResponseBuffer, 0, sizeof(WebResponseBuffer));
-        int BytesRead = read(Rs485ReadFd, WebResponseBuffer, sizeof(WebResponseBuffer) - 1);
+        int BytesRead = read(UartFd, WebResponseBuffer, sizeof(WebResponseBuffer) - 1);
         if (BytesRead > 0) {
             WebResponseBuffer[BytesRead] = '\0';
             return WebResponseBuffer;
@@ -41,7 +41,7 @@ const char* GetDeviceStatus(const char* DeviceUid) {
         };
     };
     return WebResponseBuffer;
-}
+};
 
 const char* SetDeviceParked(const char* DeviceUid) {
     return "{\"is_parking_clear\":false}";
@@ -94,7 +94,7 @@ int RunWebServer(){
         if (NULL == Daemon){ 
             return -EXIT_FAILURE;
         };
-        printf("Server running on port %d\n", REST_PORT);
+        printf("[%s][RX]: Server running on port: %d\n", PRINT_TAG, REST_PORT);
         RunRs485Controller();
         MHD_stop_daemon(Daemon);
 }
