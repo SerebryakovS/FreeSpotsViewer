@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <cJSON.h>
 
 #define REST_PORT         16333
 #define PRINT_TAG         "SpotTrack"

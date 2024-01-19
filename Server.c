@@ -10,22 +10,21 @@ struct PostRequest {
     size_t Size;
 };
 
-static int IteratePost(void *coninfo_cls, enum MHD_ValueKind kind, const char *key,
-                       const char *filename, const char *content_type,
-                       const char *transfer_encoding, const char *data, 
-                       uint64_t off, size_t size) {
-    struct PostRequest *postRequest = coninfo_cls;
-    if (off + size > postRequest->size) {
-        char *new_data = realloc(postRequest->data, off + size + 1);
-        if (!new_data) {
+static int IteratePost(void *ConinfoCls, enum MHD_ValueKind Kind, const char *Key,
+                       const char *Filename, const char *ContentType,
+                       const char *TransferEncoding, const char *Data, 
+                       uint64_t Off, size_t Size) {
+    struct PostRequest *postRequest = ConinfoCls;
+    if (Off + Size > postRequest->size) {
+        char *NewData = realloc(postRequest->data, Off + Size + 1);
+        if (!NewData) {
             return MHD_NO;
-        }
-        postRequest->data = new_data;
-        postRequest->size = off + size;
-    }
-
-    memcpy(postRequest->data + off, data, size);
-    postRequest->data[off + size] = '\0';
+        };
+        postRequest->Data = NewData;
+        postRequest->Size = Off + Size;
+    };
+    memcpy(postRequest->Data + Off, Data, Size);
+    postRequest->data[Off + Size] = '\0';
     return MHD_YES;
 };
 
@@ -179,8 +178,8 @@ static int AnswerToWebRequest(void *cls, struct MHD_Connection *Connection,
             if (!_PostRequest) {
                 return MHD_NO;
             };
-            _PostRequest->data = NULL;
-            _PostRequest->size = 0;
+            _PostRequest->Data = NULL;
+            _PostRequest->Size = 0;
             *ConCls = _PostRequest;
             return MHD_YES;
         };
