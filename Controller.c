@@ -53,7 +53,6 @@ int RunRs485Controller( void ) {
 
     char RX_Buffer[RS485_BUFFER_LEN]; memset(RX_Buffer, 0, RS485_BUFFER_LEN);
     char TX_Buffer[RS485_BUFFER_LEN]; memset(TX_Buffer, 0, RS485_BUFFER_LEN);
-    int RX_Index = 0; bool JsonStart = false;
     char Cmd[32];
     printf("[%s][OK]: Running main monitor loop..\n", PRINT_TAG);
     while (1) {
@@ -69,26 +68,8 @@ int RunRs485Controller( void ) {
                     int BytesRead = read(UartFd, TempBuffer, sizeof(TempBuffer) - 1);
                     if (BytesRead > 0) {
                         TempBuffer[BytesRead] = '\0';
-                        for (int Idx = 0; Idx < BytesRead; ++Idx) {
-                            if (TempBuffer[Idx] == '{') {
-                                JsonStart = true;
-                                RX_Index = 0;
-                            };
-                            if (JsonStart) {
-                                RX_Buffer[RX_Index++] = TempBuffer[Idx];
-                                if (TempBuffer[Idx] == '}') {
-                                    RX_Buffer[RX_Index] = '\0';
-                                    printf("[%s][RX]: %s\n", PRINT_TAG, RX_Buffer);
-                                    JsonStart = false;
-                                    memset(RX_Buffer, 0, RS485_BUFFER_LEN);
-                                    RX_Index = 0; 
-                                };
-                            };
-                            if (RX_Index >= RS485_BUFFER_LEN) {
-                                RX_Index = 0;
-                                JsonStart = false;
-                                memset(RX_Buffer, 0, RS485_BUFFER_LEN);
-                            };
+                        if (ExtractJson(TempBuffer, BytesRead, RX_Buffer, RS485_BUFFER_LEN)){
+                            printf("[%s][RX]: %s\n", PRINT_TAG, RX_Buffer);
                         };
                     };
                 };

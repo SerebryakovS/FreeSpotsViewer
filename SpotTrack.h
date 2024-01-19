@@ -20,3 +20,5 @@ extern int WebToRs485ReadFd, WebToRs485WriteFd, UartFd;
 
 int RunRs485Controller( void );
 int RunWebServer( void );
+
+int PrettyPrintJSON(const char*, char*, size_t);

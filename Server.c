@@ -4,20 +4,6 @@
 
 char WebResponseBuffer[WEB_RESPONSE_SIZE];
 
-int PrettyPrintJSON(const char* InputJson, char* OutputBuffer, size_t BufferSize) {
-    FILE *SubProcessPipe;
-    char Command[WEB_RESPONSE_SIZE + 64]; 
-    snprintf(Command, sizeof(Command), "echo '%s' | jq .", InputJson);
-    SubProcessPipe = popen(Command, "r");
-    if (!SubProcessPipe) {
-        return -1; 
-    };
-    size_t bytesRead = fread(OutputBuffer, 1, BufferSize - 1, SubProcessPipe);
-    OutputBuffer[bytesRead] = '\0';
-    pclose(SubProcessPipe);
-    return 0; 
-};
-
 const char* GetListOfDevices() {
     FILE *KnownDevices = fopen("KnownDevices.json", "r");
     if (!KnownDevices) {
@@ -43,15 +29,19 @@ const char* GetDeviceStatus(const char* DeviceUid) {
     if (BytesWrite <= 0) {
         snprintf(WebResponseBuffer, WEB_RESPONSE_SIZE, "{\"error\":\"WRITE_ERR\"}");
     } else {
-        sleep(1);
         memset(WebResponseBuffer, 0, sizeof(WebResponseBuffer));
-        int BytesRead = read(UartFd, WebResponseBuffer, sizeof(WebResponseBuffer) - 1);
+        char TempBuffer[256];
+        int BytesRead = read(UartFd, TempBuffer, sizeof(TempBuffer) - 1);
         if (BytesRead > 0) {
             WebResponseBuffer[BytesRead] = '\0';
-            if (PrettyPrintJSON(WebResponseBuffer, PrettyJson, sizeof(PrettyJson)) == 0) {
-                return PrettyJson;
+            if (ExtractJson(TempBuffer, BytesRead, WebResponseBuffer, RS485_BUFFER_LEN)){
+                if (PrettyPrintJSON(WebResponseBuffer, PrettyJson, sizeof(PrettyJson)) == 0) {
+                    return PrettyJson;
+                } else {
+                    snprintf(WebResponseBuffer, WEB_RESPONSE_SIZE, "{\"error\":\"PRINT_ERR\"}");
+                };  
             } else {
-                snprintf(WebResponseBuffer, WEB_RESPONSE_SIZE, "{\"error\":\"PRINT_ERR\"}");
+                snprintf(WebResponseBuffer, WEB_RESPONSE_SIZE, "{\"error\":\"PARSE_ERR\"}");
             };
         } else if (BytesRead < 0 && errno != EAGAIN && errno != EWOULDBLOCK) {
             snprintf(WebResponseBuffer, WEB_RESPONSE_SIZE, "{\"error\":\"READ_ERR\"}");
