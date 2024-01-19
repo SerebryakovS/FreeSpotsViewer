@@ -23,7 +23,7 @@ int ExtractJson(const char *InputBuffer, int InputSize, char *OutputBuffer, int 
         if (InputBuffer[Idx] == '{') {
             JsonStart = true;
             RX_Index = 0;
-        }
+        };
         if (JsonStart) {
             OutputBuffer[RX_Index++] = InputBuffer[Idx];
             if (InputBuffer[Idx] == '}') {
@@ -31,12 +31,12 @@ int ExtractJson(const char *InputBuffer, int InputSize, char *OutputBuffer, int 
                 printf("[%s][RX]: %s\n", PRINT_TAG, OutputBuffer);
                 JsonStart = false;
                 RX_Index = 0; 
-            }
-        }
+            };
+        };
         if (RX_Index >= OutputBufferSize - 1) {
             RX_Index = 0;
             JsonStart = false;
             memset(OutputBuffer, 0, OutputBufferSize);
-        }
-    }
-}
+        };
+    };
+};

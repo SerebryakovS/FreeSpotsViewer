@@ -13,7 +13,7 @@ Maximum delay for devices: 256 * 30[ms] = 7680[ms];
 #### get_status
 ```
 [SpotTrack][TX]: {"uid":"34FF7206504E393854410243","type":"get_status"}
-[SpotTrack][RX]: {"uid":"34FF7206504E393854410243","threshold":1000,"measured_1":1230,"measured_2":   0,"is_parking_clear":true}
+[SpotTrack][RX]: {"uid":"34FF7206504E393854410243","threshold":1000,"measured_1":1230,"measured_2":   0,"is_parking_clear":true, "is_parked_set":true}
 ```
 #### ping
 ```
@@ -22,17 +22,17 @@ Maximum delay for devices: 256 * 30[ms] = 7680[ms];
 ```
 #### set_working_mode
 ```
-[SpotTrack][TX]: {"uid":"34FF7206504E393854410243","type":"set_working_mode","is_auto" : false}
+[SpotTrack][TX]: {"uid":"34FF7206504E393854410243","type":"set_working_mode","is_auto":false}
 [SpotTrack][RX]: {"uid":"34FF7206504E393854410243"}
 ```
 #### set_threshold
 ```
-[SpotTrack][TX]: {"uid":"34FF7206504E393854410243","type":"set_threshold","is_auto" : 500}
+[SpotTrack][TX]: {"uid":"34FF7206504E393854410243","type":"set_threshold","is_auto":500}
 [SpotTrack][RX]: {"uid":"34FF7206504E393854410243"}
 ```
 #### set_parked
 ```
-[SpotTrack][TX]: {"uid":"34FF7206504E393854410243","type":"set_parked","is_parked_set" : true}
+[SpotTrack][TX]: {"uid":"34FF7206504E393854410243","type":"set_parked","is_parked_set":true}
 [SpotTrack][RX]: {"uid":"34FF7206504E393854410243"}
 ```
 
@@ -57,19 +57,17 @@ $ curl -X GET http://localhost:16333/get_status?device_uid=34FF7206504E393854410
     "threshold": 1000,
     "measured_1": 26,
     "measured_2": 0,
-    "is_parking_clear": false
+    "is_parking_clear": false,
+    "is_parked_set": false
 }
 ```
 #### POST /set_parked
-request body:
 ```
-{
-    "device_uid" : "..."
-}
+$ curl -X POST -d '{"uid":""}' http://localhost:16333/get_status?set_parked=34FF7206504E393854410243
 ```
-response body:
-```
-{
-    "device_uid" : "..."
-}
-```
+
+TODO:
+
+1. is_parking_clear is not always filled
+2. multiple equal packet's received from client
+3. pretty print didn't finished

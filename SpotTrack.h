@@ -22,3 +22,4 @@ int RunRs485Controller( void );
 int RunWebServer( void );
 
 int PrettyPrintJSON(const char*, char*, size_t);
+int ExtractJson(const char *, int, char *, int);
