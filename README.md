@@ -39,23 +39,25 @@ Maximum delay for devices: 256 * 30[ms] = 7680[ms];
 ### Rest API
 
 #### GET  /list_devices
-response body:
 ```
+$ curl -X GET http://localhost:16333/list_devices
 {
-    "list_devices" : [
-        "<device_uid_1>", "<device_uid_2>", ...
+    "list_devices" :[
+        "34FF7206504E393854410243",
+        "34FF6E06504E393817500343",
+        "34FF6E06504E393846420243"
     ]
 }
 ```
 #### GET  /get_status?device_uid=...
-response body:
 ```
+$ curl -X GET http://localhost:16333/get_status?device_uid=34FF7206504E393854410243
 {
-    "device_uid" : "...",
-    "threshold" : ...,
-    "measured_1" : ...,
-    "measured_2" : ...,
-    "is_parking_clear" : true | false
+    "uid": "34FF7206504E393854410243",
+    "threshold": 1000,
+    "measured_1": 26,
+    "measured_2": 0,
+    "is_parking_clear": false
 }
 ```
 #### POST /set_parked

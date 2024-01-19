@@ -62,7 +62,7 @@ int RunRs485Controller( void ) {
         FD_SET(InputFdUsed, &UartReadFd);
         //Timeout.tv_sec = 3;
         //Timeout.tv_usec = 0;
-        if (select(UartFd + 1, &UartReadFd, NULL, NULL, NULL) > 0{ //&Timeout) > 0) {
+        if (select(UartFd + 1, &UartReadFd, NULL, NULL, NULL) > 0){ //&Timeout) > 0) {
             if (WebToRs485ReadFd == -1){
                 if (FD_ISSET(UartFd, &UartReadFd)) {
                     char TempBuffer[256];

@@ -4,6 +4,20 @@
 
 char WebResponseBuffer[WEB_RESPONSE_SIZE];
 
+int PrettyPrintJSON(const char* InputJson, char* OutputBuffer, size_t BufferSize) {
+    FILE *SubProcessPipe;
+    char Command[WEB_RESPONSE_SIZE + 64]; 
+    snprintf(Command, sizeof(Command), "echo '%s' | jq .", InputJson);
+    SubProcessPipe = popen(Command, "r");
+    if (!SubProcessPipe) {
+        return -1; 
+    };
+    size_t bytesRead = fread(OutputBuffer, 1, BufferSize - 1, SubProcessPipe);
+    OutputBuffer[bytesRead] = '\0';
+    pclose(SubProcessPipe);
+    return 0; 
+};
+
 const char* GetListOfDevices() {
     FILE *KnownDevices = fopen("KnownDevices.json", "r");
     if (!KnownDevices) {
@@ -23,6 +37,7 @@ const char* GetListOfDevices() {
 
 const char* GetDeviceStatus(const char* DeviceUid) {
     char Rs485Cmd[256];
+    char PrettyJson[WEB_RESPONSE_SIZE];
     snprintf(Rs485Cmd, sizeof(Rs485Cmd), "{\"uid\":\"%s\",\"type\":\"get_status\"}\n", DeviceUid);
     int BytesWrite = write(WebToRs485WriteFd, Rs485Cmd, strlen(Rs485Cmd));
     if (BytesWrite <= 0) {
@@ -33,7 +48,11 @@ const char* GetDeviceStatus(const char* DeviceUid) {
         int BytesRead = read(UartFd, WebResponseBuffer, sizeof(WebResponseBuffer) - 1);
         if (BytesRead > 0) {
             WebResponseBuffer[BytesRead] = '\0';
-            return WebResponseBuffer;
+            if (PrettyPrintJSON(WebResponseBuffer, PrettyJson, sizeof(PrettyJson)) == 0) {
+                return PrettyJson;
+            } else {
+                snprintf(WebResponseBuffer, WEB_RESPONSE_SIZE, "{\"error\":\"PRINT_ERR\"}");
+            };
         } else if (BytesRead < 0 && errno != EAGAIN && errno != EWOULDBLOCK) {
             snprintf(WebResponseBuffer, WEB_RESPONSE_SIZE, "{\"error\":\"READ_ERR\"}");
         } else {
