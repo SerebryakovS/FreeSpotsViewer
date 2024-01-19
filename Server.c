@@ -3,6 +3,42 @@
 #include <microhttpd.h>
 
 char WebResponseBuffer[WEB_RESPONSE_SIZE];
+#define POSTBUFFERSIZE  512
+
+struct PostRequest {
+    char* Data;
+    size_t Size;
+};
+
+static int IteratePost(void *coninfo_cls, enum MHD_ValueKind kind, const char *key,
+                       const char *filename, const char *content_type,
+                       const char *transfer_encoding, const char *data, 
+                       uint64_t off, size_t size) {
+    struct PostRequest *postRequest = coninfo_cls;
+    if (off + size > postRequest->size) {
+        char *new_data = realloc(postRequest->data, off + size + 1);
+        if (!new_data) {
+            return MHD_NO;
+        }
+        postRequest->data = new_data;
+        postRequest->size = off + size;
+    }
+
+    memcpy(postRequest->data + off, data, size);
+    postRequest->data[off + size] = '\0';
+    return MHD_YES;
+};
+
+static void RequestCompleted(void *Cls, struct MHD_Connection *Connection,
+                             void **ConCls, enum MHD_RequestTerminationCode Toe) {
+    struct PostRequest *_PostRequest = *ConCls;
+    if (_PostRequest) {
+        if (_PostRequest->data) {
+            free(_PostRequest->data);
+        };
+        free(_PostRequest);
+    };
+};
 
 const char* GetListOfDevices() {
     FILE *KnownDevices = fopen("KnownDevices.json", "r");
@@ -111,41 +147,56 @@ static int HandleGetRequest(const struct MHD_Connection *Connection, const char*
 };
 
 
-static int HandlePostRequest(const struct MHD_Connection *Connection, const char* Url) {
+static int HandlePostRequest(const struct MHD_Connection *Connection, const char* Url,
+                             struct PostRequest *_PostRequest) {
     if (strcmp(Url, "/set_parked") == 0) {
-        const char* DeviceUid = MHD_lookup_connection_value(Connection, MHD_POSTDATA_KIND, "uid");
-        const char* IsParkedSet = MHD_lookup_connection_value(Connection, MHD_POSTDATA_KIND, "is_parked_set");
-        if (DeviceUid != NULL && IsParkedSet != NULL) {
-            const char* ResponseStr = SetDeviceParked(DeviceUid, IsParkedSet); 
-            struct MHD_Response *Response = MHD_create_response_from_buffer(strlen(ResponseStr),
-                                                                            (void*)ResponseStr, 
-                                                                            MHD_RESPMEM_MUST_COPY);
-            int ReturnValue = MHD_queue_response(Connection, MHD_HTTP_OK, Response);
-            MHD_destroy_response(Response);
-            return ReturnValue;
-        } else {
-            const char* ErrorResponse = "{\"error\":\"Missing parameters\"}";
-            struct MHD_Response *Response = MHD_create_response_from_buffer(strlen(ErrorResponse),
-                                                                            (void*)ErrorResponse, 
-                                                                            MHD_RESPMEM_MUST_COPY);
-            MHD_queue_response(Connection, MHD_HTTP_BAD_REQUEST, Response);
-            MHD_destroy_response(Response);
+        cJSON *json = cJSON_Parse(_PostRequest->data);
+        const cJSON *DeviceUid = cJSON_GetObjectItemCaseSensitive(json, "uid");
+        const cJSON *IsParkedSet = cJSON_GetObjectItemCaseSensitive(json, "is_parked_set");
+        if (!cJSON_IsString(DeviceUid) || !cJSON_IsBool(IsParkedSet)) {
+            cJSON_Delete(json);
             return MHD_HTTP_BAD_REQUEST;
         };
+        const char *ResponseStr = SetDeviceParked(DeviceUid->valuestring, cJSON_IsTrue(IsParkedSet) ? "true" : "false");
+        cJSON_Delete(json);
+        struct MHD_Response *Response = MHD_create_response_from_buffer(strlen(ResponseStr),
+                                                                        (void*)ResponseStr, 
+                                                                        MHD_RESPMEM_MUST_COPY);
+        int ReturnValue = MHD_queue_response(Connection, MHD_HTTP_OK, Response);
+        MHD_destroy_response(Response);
+        return ReturnValue;
     };
+    return MHD_HTTP_NOT_FOUND;
 };
 
-static int AnswerToWebRequest(void *Cls, struct MHD_Connection *Connection,
+static int AnswerToWebRequest(void *cls, struct MHD_Connection *Connection,
                               const char *Url, const char *Method,
                               const char *Version, const char *UploadData,
                               size_t *UploadDataSize, void **ConCls) {
-    if (strcmp(Method, "GET") == 0) {
+    if (strcmp(Method, "POST") == 0) {
+        if (*ConCls == NULL) {
+            struct PostRequest *_PostRequest = malloc(sizeof(struct PostRequest));
+            if (!_PostRequest) {
+                return MHD_NO;
+            };
+            _PostRequest->data = NULL;
+            _PostRequest->size = 0;
+            *ConCls = _PostRequest;
+            return MHD_YES;
+        };
+        struct PostRequest *_PostRequest = *ConCls;
+        if (*UploadDataSize != 0) {
+            MHD_post_process(_PostRequest->processor, UploadData, *UploadDataSize);
+            *UploadDataSize = 0;
+            return MHD_YES;
+        } else {
+            return HandlePostRequest(Connection, Url, _PostRequest);
+        };
+    } else if (strcmp(Method, "GET") == 0) {
         return HandleGetRequest(Connection, Url);
-    } else if (strcmp(Method, "POST") == 0) {
-        return HandlePostRequest(Connection, Url);
     };
     return MHD_NO;
-};
+}
 
 int RunWebServer(){
         struct MHD_Daemon *Daemon = MHD_start_daemon(MHD_USE_INTERNAL_POLLING_THREAD, REST_PORT, 

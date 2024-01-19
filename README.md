@@ -63,7 +63,8 @@ $ curl -X GET http://localhost:16333/get_status?device_uid=34FF7206504E393854410
 ```
 #### POST /set_parked
 ```
-$ curl -X POST -d '{"uid":""}' http://localhost:16333/get_status?set_parked=34FF7206504E393854410243
+$ curl -X POST -d '{"uid":"34FF7206504E393854410243","is_parked_set":true}' http://localhost:16333/set_parked
+
 ```
 
 TODO:
