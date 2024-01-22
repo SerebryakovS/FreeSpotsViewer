@@ -79,9 +79,7 @@ const char* SetDeviceReserved(const char* DeviceUid, const char* IsReserved) {
 const char* SetDeviceThreshold(const char* DeviceUid, const char* Threshold) {
     char Rs485Cmd[256];
     snprintf(Rs485Cmd, sizeof(Rs485Cmd), "{\"uid\":\"%s\",\"type\":\"set_threshold\",\"threshold\":%s}\n", DeviceUid, Threshold);
-    if (Rs485MakeIO(Rs485Cmd, WebResponseBuffer, sizeof(WebResponseBuffer))){
-        SetCacheSpotState(DeviceUid, StrToBool(IsReserved));
-    };
+    Rs485MakeIO(Rs485Cmd, WebResponseBuffer, sizeof(WebResponseBuffer));
     return WebResponseBuffer;
 };
 //
