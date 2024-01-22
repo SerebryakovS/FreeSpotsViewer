@@ -66,6 +66,12 @@ $ curl -X GET http://localhost:16333/get_status?device_uid=34FF7206504E393854410
 $ curl -X POST -d '{"uid":"34FF7206504E393854410243","is_parked_set":true}' http://localhost:16333/set_parked
 
 ```
+#### GET /free_spots_count
+```
+$ curl -X GET http://localhost:16333/free_spots_count
+```
+
+
 
 TODO:
 

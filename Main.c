@@ -6,7 +6,7 @@
 int WebToRs485ReadFd, WebToRs485WriteFd, UartFd;
 
 int main(int argc, char *argv[]) {
-
+    InitWorkingSpots();
     if (argc == 1) {
         int PipeFds[2];
         if (pipe(PipeFds) == -1) {

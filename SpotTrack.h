@@ -15,6 +15,7 @@
 #define RS485_BUFFER_LEN  1024
 #define RS485_TX_DELAY    10000
 #define WEB_RESPONSE_SIZE 1024
+#define SPOTS_MAX_COUNT   256
 
 extern int WebToRs485ReadFd, WebToRs485WriteFd, UartFd;
 
@@ -23,3 +24,18 @@ int RunWebServer( void );
 
 int PrettyPrintJSON(const char*, char*, size_t);
 int ExtractJson(const char *, int, char *, int);
+
+bool WriteToRs485(const char *command, char *ResponseBuffer, size_t ResponseBufferSize);
+bool ReadFromRs485(char *ResponseBuffer, size_t ResponseBufferSize);
+bool Rs485MakeIO(char *Rs485Cmd, char *ResponseBuffer, size_t ResponseBufferSize);
+
+typedef struct{
+    char DeviceUid[25];
+    bool State;
+}Spot;
+
+Spot WorkingSpots[SPOTS_MAX_COUNT];
+
+bool InitCacheWorkingSpots();
+void SetCacheSpotState(char *DeviceUid, bool State);
+int GetCacheFreeSpotsCount(void);

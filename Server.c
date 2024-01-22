@@ -7,117 +7,87 @@ char WebResponseBuffer[WEB_RESPONSE_SIZE];
 struct PostRequest {
     char* Data; size_t Size;
 };
-
-// const char* GetListOfDevices() {
-//     FILE *KnownDevices = fopen("KnownDevices.JsonObject", "r");
-//     if (!KnownDevices) {
-//         snprintf(WebResponseBuffer, WEB_RESPONSE_SIZE, "{\"error\":\"FILE_ERR\"}\n");
-//         return WebResponseBuffer;
-//     };
-//     memset(WebResponseBuffer, 0, sizeof(WebResponseBuffer));
-//     size_t BytesRead = fread(WebResponseBuffer, 1, WEB_RESPONSE_SIZE - 1, KnownDevices);
-//     fclose(KnownDevices);
-//     if (BytesRead == 0) {
-//         snprintf(WebResponseBuffer, WEB_RESPONSE_SIZE, "{\"error\":\"READ_ERR\"}\n");
-//         return WebResponseBuffer;
-//     };
-//     WebResponseBuffer[BytesRead] = '\0';
-//     return WebResponseBuffer;
-// };
 //
-// bool WriteToRs485(const char *command, char *ResponseBuffer, size_t ResponseBufferSize) {
-//     int BytesWrite = write(WebToRs485WriteFd, command, strlen(command));
-//     if (BytesWrite <= 0) {
-//         snprintf(ResponseBuffer, ResponseBufferSize, "{\"error\":\"WRITE_ERR\"}\n");
-//         return false;
-//     };
-//     return true;
-// };
+void GetListOfDevices(char *OutBuffer, size_t BufferSize) {
+    const char *FormatStart = "{\n    \"list_devices\" :[\n";
+    const char *FormatEnd = "\n    ]\n}";
+    const char *FormatDevice = "        \"%s\"";
+    strncat(OutBuffer, FormatStart, BufferSize - strlen(OutBuffer) - 1);
+    for (int Idx = 0; i < SPOTS_MAX_COUNT && WorkingSpots[Idx].DeviceUid[0] != '\0'; Idx++) {
+        char DeviceUid[25];
+        snprintf(DeviceUid, sizeof(DeviceUid), FormatDevice, WorkingSpots[Idx].DeviceUid);
+        strncat(OutBuffer, DeviceUid, BufferSize - strlen(OutBuffer) - 1);
+        if (i < SPOTS_MAX_COUNT - 1 && WorkingSpots[Idx + 1].DeviceUid[0] != '\0') {
+            strncat(OutBuffer, ",\n", BufferSize - strlen(OutBuffer) - 1);
+        };
+    };
+    strncat(OutBuffer, FormatEnd, BufferSize - strlen(OutBuffer) - 1);
+};
 //
-// bool ReadFromUart(char *ResponseBuffer, size_t ResponseBufferSize) {
-//     char TempBuffer[256];
-//     int BytesRead = read(UartFd, TempBuffer, sizeof(TempBuffer) - 1);
-//     if (BytesRead > 0) {
-//         TempBuffer[BytesRead] = '\0';
-//         return ExtractJson(TempBuffer, BytesRead, ResponseBuffer, ResponseBufferSize);
-//     } else if (BytesRead < 0 && errno != EAGAIN && errno != EWOULDBLOCK) {
-//         snprintf(ResponseBuffer, ResponseBufferSize, "{\"error\":\"READ_ERR\"}\n");
-//     } else {
-//         snprintf(ResponseBuffer, ResponseBufferSize, "{\"error\":\"NO_DATA\"}\n");
-//     };
-//     return false;
-// };
+const char* GetFreeSpotsCount() {
+    int FreeSpotsCount = GetCacheFreeSpotsCount();
+    snprintf(WebResponseBuffer, WEB_RESPONSE_SIZE, "{\n    \"free_spots_count\" : %d\n}", FreeSpotsCount);
+    return WebResponseBuffer;
+};
 //
-// const char* GetDeviceStatus(const char* DeviceUid) {
-//     char Rs485Cmd[256];
-//     snprintf(Rs485Cmd, sizeof(Rs485Cmd), "{\"uid\":\"%s\",\"type\":\"get_status\"}\n", DeviceUid);
-//     int BytesWrite = write(WebToRs485WriteFd, Rs485Cmd, strlen(Rs485Cmd));
-//     if (BytesWrite <= 0) {
-//         snprintf(WebResponseBuffer, WEB_RESPONSE_SIZE, "{\"error\":\"WRITE_ERR\"}\n");
-//     } else {
-//         memset(WebResponseBuffer, 0, sizeof(WebResponseBuffer));
-//         char TempBuffer[256];
-//         int BytesRead = read(UartFd, TempBuffer, sizeof(TempBuffer) - 1);
-//         if (BytesRead > 0) {
-//             WebResponseBuffer[BytesRead] = '\0';
-//             if (ExtractJson(TempBuffer, BytesRead, WebResponseBuffer, RS485_BUFFER_LEN)){
-//                 char PrettyJson[WEB_RESPONSE_SIZE];
-//                 if (PrettyPrintJSON(WebResponseBuffer, PrettyJson, sizeof(PrettyJson)) == 0) {
-//                     return PrettyJson;
-//                 } else {
-//                     snprintf(WebResponseBuffer, WEB_RESPONSE_SIZE, "{\"error\":\"PRINT_ERR\"}\n");
-//                 };
-//             } else {
-//                 snprintf(WebResponseBuffer, WEB_RESPONSE_SIZE, "{\"error\":\"PARSE_ERR\"}\n");
-//             };
-//         } else if (BytesRead < 0 && errno != EAGAIN && errno != EWOULDBLOCK) {
-//             snprintf(WebResponseBuffer, WEB_RESPONSE_SIZE, "{\"error\":\"READ_ERR\"}\n");
-//         } else {
-//             snprintf(WebResponseBuffer, WEB_RESPONSE_SIZE, "{\"error\":\"NO_DATA\"}\n");
-//         };
-//     };
-//     return WebResponseBuffer;
-// };
-
+bool StrToBool(const char *StrBool) {
+    if (strcmp(StrBool, "true") == 0) {
+        return true;
+    } else if (strcmp(StrBool, "false") == 0) {
+        return false;
+    };
+    return false; 
+};
+//
+const char* GetDeviceStatus(const char* DeviceUid) {
+    char Rs485Cmd[256];
+    snprintf(Rs485Cmd, sizeof(Rs485Cmd), "{\"uid\":\"%s\",\"type\":\"get_status\"}\n", DeviceUid);
+    if (Rs485MakeIO(Rs485Cmd, WebResponseBuffer, sizeof(WebResponseBuffer))){
+        const char *IsParkedSetKey = "\"is_parked_set\":";
+        char *IsFound = strstr(jsonStr, IsParkedSetKey);
+        if (IsFound) {
+            IsFound += strlen(IsParkedSetKey);
+            char StrBoolValue[6];
+            if (sscanf(IsFound, " %5s", StrBoolValue) == 1) {
+                SetCacheSpotState(DeviceUid, StrToBool(StrBoolValue));
+            };
+        };
+    };
+    return WebResponseBuffer;
+};
+//
 const char* SetDeviceParked(const char* DeviceUid, const char* IsParkedSet) {
     char Rs485Cmd[256];
     snprintf(Rs485Cmd, sizeof(Rs485Cmd), "{\"uid\":\"%s\",\"type\":\"set_parked\",\"is_parked_set\":%s}\n", DeviceUid, IsParkedSet);
-    // if (WriteToRs485(Rs485Cmd, WebResponseBuffer, sizeof(WebResponseBuffer))) {
-    //     if (ReadFromUart(WebResponseBuffer, sizeof(WebResponseBuffer))) {
-    //         char PrettyJson[WEB_RESPONSE_SIZE];
-    //         if (PrettyPrintJSON(WebResponseBuffer, PrettyJson, sizeof(PrettyJson)) == 0) {
-    //             return PrettyJson;
-    //         } else {
-    //             snprintf(WebResponseBuffer, WEB_RESPONSE_SIZE, "{\"error\":\"PRINT_ERR\"}\n");
-    //         };
-    //     };
-    // };
-    sprintf(WebResponseBuffer, "%s",Rs485Cmd);
+    if (Rs485MakeIO(Rs485Cmd, WebResponseBuffer, sizeof(WebResponseBuffer))){
+        SetCacheSpotState(DeviceUid, StrToBool(IsParkedSet));
+    };
     return WebResponseBuffer;
 };
-
-// static int HandleGetRequest(const struct MHD_Connection *Connection, const char* Url) {
-//     const char* ResponseStr = NULL;
-//     if (strcmp(Url, "/list_devices") == 0) {
-//         ResponseStr = GetListOfDevices();
-//     } else if (strncmp(Url, "/get_status", strlen("/get_status")) == 0) {
-//         const char* DeviceUid = MHD_lookup_connection_value(Connection, MHD_GET_ARGUMENT_KIND, "device_uid");
-//         ResponseStr = GetDeviceStatus(DeviceUid);
-//     } else {
-//         ResponseStr = "{\"error\":\"Unknown endpoint\"}\n";
-//     };
-    // if (ResponseStr == NULL) {
-    //     ResponseStr = "{\"error\":\"Internal Server Error\"}\n";
-    // };
-//     struct MHD_Response *Response = MHD_create_response_from_buffer(strlen(ResponseStr),
-//                                                                     (void*)ResponseStr,
-//                                                                     MHD_RESPMEM_MUST_COPY);
-//     int ReturnValue = MHD_queue_response(Connection, MHD_HTTP_OK, Response);
-//     MHD_destroy_response(Response);
-//     return ReturnValue;
-// };
-
-
+//
+static int HandleGetRequest(const struct MHD_Connection *Connection, const char* Url) {
+    const char* ResponseStr = NULL;
+    if (strcmp(Url, "/list_devices") == 0) {
+        ResponseStr = GetListOfDevices();
+    } else if (strncmp(Url, "/get_status", strlen("/get_status")) == 0) {
+        const char* DeviceUid = MHD_lookup_connection_value(Connection, MHD_GET_ARGUMENT_KIND, "device_uid");
+        ResponseStr = GetDeviceStatus(DeviceUid);
+    } if (strncmp(Url, "/free_spots_count", strlen("/free_spots_count")) == 0) {
+        ResponseStr = GetFreeSpotsCount();
+    } else {
+        ResponseStr = "{\"error\":\"Unknown endpoint\"}\n";
+    };
+    if (ResponseStr == NULL) {
+        ResponseStr = "{\"error\":\"Internal Server Error\"}\n";
+    };
+    struct MHD_Response *Response = MHD_create_response_from_buffer(strlen(ResponseStr),
+                                                                    (void*)ResponseStr,
+                                                                    MHD_RESPMEM_MUST_COPY);
+    int ReturnValue = MHD_queue_response(Connection, MHD_HTTP_OK, Response);
+    MHD_destroy_response(Response);
+    return ReturnValue;
+};
+//
 char* FindValueForKey(const char* key, const char* JsonObject) {
     char *p = strstr(JsonObject, key);
     if (!p) return NULL;
@@ -125,6 +95,7 @@ char* FindValueForKey(const char* key, const char* JsonObject) {
     while (*p == ' ' || *p == ':' || *p == '\"') ++p;
     return p;
 };
+//
 static int HandlePostRequest(const struct MHD_Connection *Connection, const char* Url,
                              struct PostRequest *_PostRequest) {
     const char* ResponseStr = NULL;
@@ -159,9 +130,8 @@ static int HandlePostRequest(const struct MHD_Connection *Connection, const char
     int ReturnValue = MHD_queue_response(Connection, MHD_HTTP_OK, Response);
     MHD_destroy_response(Response);
     return ReturnValue;
-}
-
-
+};
+//
 static void RequestCompleted(void *Cls, struct MHD_Connection *Connection,
                               void **ConCls, enum MHD_RequestTerminationCode Toe){
     struct PostRequest *_PostRequest = *ConCls;
@@ -173,7 +143,7 @@ static void RequestCompleted(void *Cls, struct MHD_Connection *Connection,
     };
     *ConCls = NULL;
 };
-
+//
 static int AnswerToWebRequest(void *cls, struct MHD_Connection *Connection,
                               const char *Url, const char *Method,
                               const char *Version, const char *UploadData,
@@ -202,12 +172,12 @@ static int AnswerToWebRequest(void *cls, struct MHD_Connection *Connection,
         } else if (_PostRequest->Data) {
             return HandlePostRequest(Connection, Url, _PostRequest);
         };
-    } /*else if (strcmp(Method, "GET") == 0) {
+    } else if (strcmp(Method, "GET") == 0) {
         return HandleGetRequest(Connection, Url);
-    };*/
+    };
     return MHD_NO;
 };
-
+//
 int RunWebServer(){
         struct MHD_Daemon *Daemon = MHD_start_daemon(MHD_USE_INTERNAL_POLLING_THREAD, REST_PORT,
                                                      NULL, NULL, &AnswerToWebRequest, NULL,
@@ -217,11 +187,6 @@ int RunWebServer(){
             return -EXIT_FAILURE;
         };
         printf("[%s][RX]: Server running on port: %d\n", PRINT_TAG, REST_PORT);
-        //RunRs485Controller();
-        getchar();
+        RunRs485Controller();
         MHD_stop_daemon(Daemon);
-};
-
-int main(){
-    RunWebServer();
 };

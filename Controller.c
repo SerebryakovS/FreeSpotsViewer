@@ -19,7 +19,46 @@ int SetupUart() {
     tcsetattr(_UartFd, TCSANOW, &Options);
     return _UartFd;
 };
-
+//
+bool WriteToRs485(const char *command, char *ResponseBuffer, size_t ResponseBufferSize) {
+    int BytesWrite = write(WebToRs485WriteFd, command, strlen(command));
+    if (BytesWrite <= 0) {
+        snprintf(ResponseBuffer, ResponseBufferSize, "{\"error\":\"WRITE_ERR\"}\n");
+        return false;
+    };
+    return true;
+};
+//
+bool ReadFromRs485(char *ResponseBuffer, size_t ResponseBufferSize) {
+    char TempBuffer[256];
+    int BytesRead = read(UartFd, TempBuffer, sizeof(TempBuffer) - 1);
+    if (BytesRead > 0) {
+        TempBuffer[BytesRead] = '\0';
+        return ExtractJson(TempBuffer, BytesRead, ResponseBuffer, ResponseBufferSize);
+    } else if (BytesRead < 0 && errno != EAGAIN && errno != EWOULDBLOCK) {
+        snprintf(ResponseBuffer, ResponseBufferSize, "{\"error\":\"READ_ERR\"}\n");
+    } else {
+        snprintf(ResponseBuffer, ResponseBufferSize, "{\"error\":\"NO_DATA\"}\n");
+    };
+    return false;
+};
+//
+bool Rs485MakeIO(char *Rs485Cmd, char *ResponseBuffer, size_t ResponseBufferSize){
+    if (WriteToRs485(Rs485Cmd, ResponseBuffer, ResponseBufferSize)) {
+        if (ReadFromRs485(ResponseBuffer, ResponseBufferSize)) {
+            char PrettyJson[WEB_RESPONSE_SIZE];
+            if (PrettyPrintJSON(ResponseBuffer, PrettyJson, sizeof(PrettyJson)) == 0) {
+                sprintf(ResponseBuffer, "%s", PrettyJson);
+                return true;
+            } else {
+                snprintf(ResponseBuffer, WEB_RESPONSE_SIZE, "{\"error\":\"PRINT_ERR\"}\n");
+                return false;
+            };
+        };
+    };
+    return true;
+};
+//
 int RunRs485Controller( void ) {
     fd_set UartReadFd;
     UartFd = SetupUart();
