@@ -1,6 +1,8 @@
 
 #include "SpotTrack.h"
 
+Spot WorkingSpots[SPOTS_MAX_COUNT];
+
 bool InitCacheWorkingSpots() {
     FILE *KnownDevices = fopen("KnownDevices", "r");
     if (!KnownDevices) {
@@ -9,11 +11,14 @@ bool InitCacheWorkingSpots() {
     }
     char DeviceUid[25]; int Idx = 0;
     for (int Idx=0; Idx < SPOTS_MAX_COUNT; Idx++){
-        WorkingSpots[Idx].DeviceUid = '\0';
+        WorkingSpots[Idx].DeviceUid[0] = '\0';
         WorkingSpots[Idx].State = false;
     };
     while (fgets(DeviceUid, sizeof(DeviceUid), KnownDevices)) {
         DeviceUid[strcspn(DeviceUid, "\n")] = 0;
+        if (strlen(DeviceUid) < 24){
+            continue;
+        };
         strncpy(WorkingSpots[Idx].DeviceUid, DeviceUid, sizeof(WorkingSpots[Idx].DeviceUid) - 1);
         printf("[%s][..]: Append device to list: %s\n", PRINT_TAG, WorkingSpots[Idx].DeviceUid); 
         Idx++;
@@ -27,7 +32,7 @@ bool InitCacheWorkingSpots() {
 
 int GetCacheFreeSpotsCount(){
     int FreeCounter = 0;
-    for (int Idx=0; Idx < SPOTS_MAX_COUNT; Idx++){
+    for (int Idx = 0; Idx < SPOTS_MAX_COUNT && WorkingSpots[Idx].DeviceUid[0] != '\0'; Idx++) {
         if (WorkingSpots[Idx].State == false){
             FreeCounter++;
         };

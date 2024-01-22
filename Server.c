@@ -28,7 +28,7 @@ const char* GetListOfDevices() {
 //
 const char* GetFreeSpotsCount() {
     int FreeSpotsCount = GetCacheFreeSpotsCount();
-    snprintf(WebResponseBuffer, WEB_RESPONSE_SIZE, "{\n    \"free_spots_count\" : %d\n}", FreeSpotsCount);
+    snprintf(WebResponseBuffer, WEB_RESPONSE_SIZE, "{\n    \"free_spots_count\" : %d\n}\n", FreeSpotsCount);
     return WebResponseBuffer;
 };
 //
@@ -46,7 +46,7 @@ const char* GetDeviceStatus(const char* DeviceUid) {
     snprintf(Rs485Cmd, sizeof(Rs485Cmd), "{\"uid\":\"%s\",\"type\":\"get_status\"}\n", DeviceUid);
     if (Rs485MakeIO(Rs485Cmd, WebResponseBuffer, sizeof(WebResponseBuffer))){
         const char *IsParkedSetKey = "\"is_parked_set\":";
-        char *IsFound = strstr(jsonStr, IsParkedSetKey);
+        char *IsFound = strstr(WebResponseBuffer, IsParkedSetKey);
         if (IsFound) {
             IsFound += strlen(IsParkedSetKey);
             char StrBoolValue[6];
@@ -67,14 +67,23 @@ const char* SetDeviceParked(const char* DeviceUid, const char* IsParkedSet) {
     return WebResponseBuffer;
 };
 //
+const char* SetDeviceReserved(const char* DeviceUid, const char* IsReserved) {
+    char Rs485Cmd[256];
+    snprintf(Rs485Cmd, sizeof(Rs485Cmd), "{\"uid\":\"%s\",\"type\":\"set_parked\",\"is_reserved\":%s}\n", DeviceUid, IsReserved);
+    if (Rs485MakeIO(Rs485Cmd, WebResponseBuffer, sizeof(WebResponseBuffer))){
+        SetCacheSpotState(DeviceUid, StrToBool(IsReserved));
+    };
+    return WebResponseBuffer;
+};
+//
 static int HandleGetRequest(const struct MHD_Connection *Connection, const char* Url) {
     const char* ResponseStr = NULL;
-    if (strcmp(Url, "/list_devices") == 0) {
+    if (strncmp(Url, "/list_devices", strlen("/list_devices")) == 0) {
         ResponseStr = GetListOfDevices();
     } else if (strncmp(Url, "/get_status", strlen("/get_status")) == 0) {
         const char* DeviceUid = MHD_lookup_connection_value(Connection, MHD_GET_ARGUMENT_KIND, "device_uid");
         ResponseStr = GetDeviceStatus(DeviceUid);
-    } if (strncmp(Url, "/free_spots_count", strlen("/free_spots_count")) == 0) {
+    } else if (strncmp(Url, "/free_spots_count", strlen("/free_spots_count")) == 0) {
         ResponseStr = GetFreeSpotsCount();
     } else {
         ResponseStr = "{\"error\":\"Unknown endpoint\"}\n";

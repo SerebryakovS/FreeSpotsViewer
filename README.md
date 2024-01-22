@@ -13,7 +13,7 @@ Maximum delay for devices: 256 * 30[ms] = 7680[ms];
 #### get_status
 ```
 [SpotTrack][TX]: {"uid":"34FF7206504E393854410243","type":"get_status"}
-[SpotTrack][RX]: {"uid":"34FF7206504E393854410243","threshold":1000,"measured_1":1230,"measured_2":   0,"is_parking_clear":true, "is_parked_set":true}
+[SpotTrack][RX]: {"uid":"34FF7206504E393854410243","threshold":1000,"measured_1":1230,"measured_2":   0,"is_parking_clear":true,"is_parked_set":true,"is_reserved":false}
 ```
 #### ping
 ```
@@ -33,6 +33,11 @@ Maximum delay for devices: 256 * 30[ms] = 7680[ms];
 #### set_parked
 ```
 [SpotTrack][TX]: {"uid":"34FF7206504E393854410243","type":"set_parked","is_parked_set":true}
+[SpotTrack][RX]: {"uid":"34FF7206504E393854410243"}
+```
+#### set_reserved
+```
+[SpotTrack][TX]: {"uid":"34FF7206504E393854410243","type":"set_parked","set_reserved":true}
 [SpotTrack][RX]: {"uid":"34FF7206504E393854410243"}
 ```
 
@@ -58,19 +63,31 @@ $ curl -X GET http://localhost:16333/get_status?device_uid=34FF7206504E393854410
     "measured_1": 26,
     "measured_2": 0,
     "is_parking_clear": false,
-    "is_parked_set": false
+    "is_parked_set": false,
+    "is_reserved" : false
 }
 ```
 #### POST /set_parked
 ```
 $ curl -X POST -d '{"uid":"34FF7206504E393854410243","is_parked_set":true}' http://localhost:16333/set_parked
-
+{
+  "uid": "34FF6E06504E393846420243"
+}
 ```
 #### GET /free_spots_count
 ```
 $ curl -X GET http://localhost:16333/free_spots_count
 ```
-
+{
+    "free_spots_count" : 2
+}
+#### POST /set_reserved
+```
+$ curl -X POST -d '{"uid":"34FF7206504E393854410243","is_parked_set":true}' http://localhost:16333/set_parked
+{
+  "uid": "34FF6E06504E393846420243"
+}
+```
 
 
 TODO:

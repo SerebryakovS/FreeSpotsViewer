@@ -1,12 +1,12 @@
 
 #include "SpotTrack.h"
 
-// compilation: gcc Main.c Controller.c Server.c Json.c SpotTrack.h -o out -lgpiod -lmicrohttpd
+// compilation:  gcc Main.c Controller.c Server.c Json.c Cache.c SpotTrack.h -o out -lgpiod -lmicrohttpd
 
 int WebToRs485ReadFd, WebToRs485WriteFd, UartFd;
 
 int main(int argc, char *argv[]) {
-    InitWorkingSpots();
+    InitCacheWorkingSpots();
     if (argc == 1) {
         int PipeFds[2];
         if (pipe(PipeFds) == -1) {
