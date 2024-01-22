@@ -20,14 +20,9 @@ Maximum delay for devices: 256 * 30[ms] = 7680[ms];
 [SpotTrack][TX]: {"uid":"34FF7206504E393854410243","type":"ping"}
 [SpotTrack][RX]: {"uid":"34FF7206504E393854410243"}
 ```
-#### set_working_mode
-```
-[SpotTrack][TX]: {"uid":"34FF7206504E393854410243","type":"set_working_mode","is_auto":false}
-[SpotTrack][RX]: {"uid":"34FF7206504E393854410243"}
-```
 #### set_threshold
 ```
-[SpotTrack][TX]: {"uid":"34FF7206504E393854410243","type":"set_threshold","is_auto":500}
+[SpotTrack][TX]: {"uid":"34FF7206504E393854410243","type":"set_threshold","threshold":500}
 [SpotTrack][RX]: {"uid":"34FF7206504E393854410243"}
 ```
 #### set_parked
@@ -37,7 +32,7 @@ Maximum delay for devices: 256 * 30[ms] = 7680[ms];
 ```
 #### set_reserved
 ```
-[SpotTrack][TX]: {"uid":"34FF7206504E393854410243","type":"set_parked","set_reserved":true}
+[SpotTrack][TX]: {"uid":"34FF7206504E393854410243","type":"set_parked","is_reserved":true}
 [SpotTrack][RX]: {"uid":"34FF7206504E393854410243"}
 ```
 
@@ -71,7 +66,7 @@ $ curl -X GET http://localhost:16333/get_status?device_uid=34FF7206504E393854410
 ```
 $ curl -X POST -d '{"uid":"34FF7206504E393854410243","is_parked_set":true}' http://localhost:16333/set_parked
 {
-  "uid": "34FF6E06504E393846420243"
+  "uid": "34FF7206504E393854410243"
 }
 ```
 #### GET /free_spots_count
@@ -83,12 +78,18 @@ $ curl -X GET http://localhost:16333/free_spots_count
 }
 #### POST /set_reserved
 ```
-$ curl -X POST -d '{"uid":"34FF7206504E393854410243","is_parked_set":true}' http://localhost:16333/set_parked
+$ curl -X POST -d '{"uid":"34FF7206504E393854410243","is_reserved":true}' http://localhost:16333/set_reserved
 {
-  "uid": "34FF6E06504E393846420243"
+  "uid": "34FF7206504E393854410243"
 }
 ```
-
+#### POST /set_threshold
+```
+$ curl -X POST -d '{"uid":"34FF7206504E393854410243","threshold":300}' http://localhost:16333/set_threshold
+{
+  "uid": "34FF7206504E393854410243"
+}
+```
 
 TODO:
 

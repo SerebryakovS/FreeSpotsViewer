@@ -34,7 +34,7 @@ typedef struct{
     bool State;
 }Spot;
 
-Spot WorkingSpots[SPOTS_MAX_COUNT];
+extern Spot WorkingSpots[SPOTS_MAX_COUNT];
 
 bool InitCacheWorkingSpots();
 void SetCacheSpotState(char *DeviceUid, bool State);

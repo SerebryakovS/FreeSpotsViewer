@@ -69,7 +69,16 @@ const char* SetDeviceParked(const char* DeviceUid, const char* IsParkedSet) {
 //
 const char* SetDeviceReserved(const char* DeviceUid, const char* IsReserved) {
     char Rs485Cmd[256];
-    snprintf(Rs485Cmd, sizeof(Rs485Cmd), "{\"uid\":\"%s\",\"type\":\"set_parked\",\"is_reserved\":%s}\n", DeviceUid, IsReserved);
+    snprintf(Rs485Cmd, sizeof(Rs485Cmd), "{\"uid\":\"%s\",\"type\":\"set_reserved\",\"is_reserved\":%s}\n", DeviceUid, IsReserved);
+    if (Rs485MakeIO(Rs485Cmd, WebResponseBuffer, sizeof(WebResponseBuffer))){
+        SetCacheSpotState(DeviceUid, StrToBool(IsReserved));
+    };
+    return WebResponseBuffer;
+};
+//
+const char* SetDeviceThreshold(const char* DeviceUid, const char* Threshold) {
+    char Rs485Cmd[256];
+    snprintf(Rs485Cmd, sizeof(Rs485Cmd), "{\"uid\":\"%s\",\"type\":\"set_threshold\",\"threshold\":%s}\n", DeviceUid, Threshold);
     if (Rs485MakeIO(Rs485Cmd, WebResponseBuffer, sizeof(WebResponseBuffer))){
         SetCacheSpotState(DeviceUid, StrToBool(IsReserved));
     };
@@ -109,16 +118,20 @@ char* FindValueForKey(const char* key, const char* JsonObject) {
 //
 static int HandlePostRequest(const struct MHD_Connection *Connection, const char* Url,
                              struct PostRequest *_PostRequest) {
-    const char* ResponseStr = NULL;
-    if (strcmp(Url, "/set_parked") == 0) {
-        const char *JsonObject = _PostRequest->Data;
-        const char *UidKey = "\"uid\""; const char *ParkedKey = "\"is_parked_set\"";
-        char DeviceUid[25];
-        bool IsParkedSet = false;
+    const char *ResponseStr = NULL;
+    const char *UidKey = "\"uid\"";
+    const char *ParameterKey;
+    char DeviceUid[25];
+    int ThresholdValue;
 
+    bool IsSetParked = strcmp(Url, "/set_parked") == 0;
+    bool IsSetReserved = strcmp(Url, "/set_reserved") == 0;
+    bool IsSetThreshold = strcmp(Url, "/set_threshold") == 0;
+
+    if (IsSetParked || IsSetReserved || IsSetThreshold) {
+        const char *JsonObject = _PostRequest->Data;
         char *UidStart = FindValueForKey(UidKey, JsonObject);
-        char *ParkedStart = FindValueForKey(ParkedKey, JsonObject);
-        if (!UidStart || !ParkedStart) {
+        if (!UidStart) {
             return MHD_HTTP_BAD_REQUEST;
         };
         char *UidEnd = strchr(UidStart, '\"');
@@ -127,21 +140,42 @@ static int HandlePostRequest(const struct MHD_Connection *Connection, const char
         };
         strncpy(DeviceUid, UidStart, UidEnd - UidStart);
         DeviceUid[UidEnd - UidStart] = '\0';
-        IsParkedSet = strstr(ParkedStart, "true") != NULL;
-        ResponseStr = SetDeviceParked(DeviceUid, IsParkedSet ? "true" : "false");
+        if (IsSetParked) {
+            ParameterKey = "\"is_parked_set\"";
+            char *ParkedStart = FindValueForKey(ParameterKey, JsonObject);
+            if (!ParkedStart) return MHD_HTTP_BAD_REQUEST;
+            bool IsParkedSet = strstr(ParkedStart, "true") != NULL;
+            ResponseStr = SetDeviceParked(DeviceUid, IsParkedSet ? "true" : "false");
+        } else if (IsSetReserved) {
+            ParameterKey = "\"is_reserved\"";
+            char *ReservedStart = FindValueForKey(ParameterKey, JsonObject);
+            if (!ReservedStart) return MHD_HTTP_BAD_REQUEST;
+            bool IsReserved = strstr(ReservedStart, "true") != NULL;
+            ResponseStr = SetDeviceReserved(DeviceUid, IsReserved ? "true" : "false");
+        } else if (IsSetThreshold) {
+            ParameterKey = "\"threshold\"";
+            char *ThresholdStart = FindValueForKey(ParameterKey, JsonObject);
+            if (!ThresholdStart) return MHD_HTTP_BAD_REQUEST;
+            if (sscanf(ThresholdStart, "%d", &ThresholdValue) != 1 || ThresholdValue < 100 || ThresholdValue > 4000) {
+                return MHD_HTTP_BAD_REQUEST;
+            };
+            char ThresholdStr[12];
+            snprintf(ThresholdStr, sizeof(ThresholdStr), "%d", ThresholdValue);
+            ResponseStr = SetDeviceThreshold(DeviceUid, ThresholdStr);
+        };
     } else {
         ResponseStr = "{\"error\":\"Unknown endpoint\"}\n";
     };
     if (ResponseStr == NULL) {
         ResponseStr = "{\"error\":\"Internal Server Error\"}\n";
     };
-    struct MHD_Response *Response = MHD_create_response_from_buffer(strlen(ResponseStr),
-                                                                    (void*)ResponseStr,
+    struct MHD_Response *Response = MHD_create_response_from_buffer(strlen(ResponseStr), 
+                                                                    (void*)ResponseStr, 
                                                                     MHD_RESPMEM_MUST_COPY);
     int ReturnValue = MHD_queue_response(Connection, MHD_HTTP_OK, Response);
     MHD_destroy_response(Response);
     return ReturnValue;
-};
+}
 //
 static void RequestCompleted(void *Cls, struct MHD_Connection *Connection,
                               void **ConCls, enum MHD_RequestTerminationCode Toe){
