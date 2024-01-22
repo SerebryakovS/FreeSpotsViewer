@@ -8,20 +8,22 @@ struct PostRequest {
     char* Data; size_t Size;
 };
 //
-void GetListOfDevices(char *OutBuffer, size_t BufferSize) {
+const char* GetListOfDevices() {
     const char *FormatStart = "{\n    \"list_devices\" :[\n";
     const char *FormatEnd = "\n    ]\n}";
     const char *FormatDevice = "        \"%s\"";
-    strncat(OutBuffer, FormatStart, BufferSize - strlen(OutBuffer) - 1);
-    for (int Idx = 0; i < SPOTS_MAX_COUNT && WorkingSpots[Idx].DeviceUid[0] != '\0'; Idx++) {
-        char DeviceUid[25];
-        snprintf(DeviceUid, sizeof(DeviceUid), FormatDevice, WorkingSpots[Idx].DeviceUid);
-        strncat(OutBuffer, DeviceUid, BufferSize - strlen(OutBuffer) - 1);
-        if (i < SPOTS_MAX_COUNT - 1 && WorkingSpots[Idx + 1].DeviceUid[0] != '\0') {
-            strncat(OutBuffer, ",\n", BufferSize - strlen(OutBuffer) - 1);
+    memset(WebResponseBuffer, 0, WEB_RESPONSE_SIZE);
+    strncat(WebResponseBuffer, FormatStart, WEB_RESPONSE_SIZE - strlen(WebResponseBuffer) - 1);
+    for (int Idx = 0; Idx < SPOTS_MAX_COUNT && WorkingSpots[Idx].DeviceUid[0] != '\0'; Idx++) {
+        char DeviceEntry[30];
+        snprintf(DeviceEntry, sizeof(DeviceEntry), FormatDevice, WorkingSpots[Idx].DeviceUid);
+        strncat(WebResponseBuffer, DeviceEntry, WEB_RESPONSE_SIZE - strlen(WebResponseBuffer) - 1);
+        if (Idx < SPOTS_MAX_COUNT - 1 && WorkingSpots[Idx + 1].DeviceUid[0] != '\0') {
+            strncat(WebResponseBuffer, ",\n", WEB_RESPONSE_SIZE - strlen(WebResponseBuffer) - 1);
         };
     };
-    strncat(OutBuffer, FormatEnd, BufferSize - strlen(OutBuffer) - 1);
+    strncat(WebResponseBuffer, FormatEnd, WEB_RESPONSE_SIZE - strlen(WebResponseBuffer) - 1);
+    return WebResponseBuffer;
 };
 //
 const char* GetFreeSpotsCount() {
