@@ -12,28 +12,28 @@ Maximum delay for devices: 256 * 30[ms] = 7680[ms];
 
 #### get_status
 ```
-[SpotTrack][TX]: {"uid":"34FF7206504E393854410243","type":"get_status"}
-[SpotTrack][RX]: {"uid":"34FF7206504E393854410243","threshold":1000,"measured_1":1230,"measured_2":   0,"is_parking_clear":true,"is_parked_set":true,"is_reserved":false}
+[SpotTrack][TX]: {"uid":"34FF6E06504E393846420243","type":"get_status"}
+[SpotTrack][RX]: {"uid":"34FF6E06504E393846420243","threshold":1000,"measured_1":1230,"measured_2":   0,"is_parking_clear":true,"is_parked_set":true,"is_reserved":false}
 ```
 #### ping
 ```
-[SpotTrack][TX]: {"uid":"34FF7206504E393854410243","type":"ping"}
-[SpotTrack][RX]: {"uid":"34FF7206504E393854410243"}
+[SpotTrack][TX]: {"uid":"34FF6E06504E393846420243","type":"ping"}
+[SpotTrack][RX]: {"uid":"34FF6E06504E393846420243"}
 ```
 #### set_threshold
 ```
-[SpotTrack][TX]: {"uid":"34FF7206504E393854410243","type":"set_threshold","threshold":500}
-[SpotTrack][RX]: {"uid":"34FF7206504E393854410243"}
+[SpotTrack][TX]: {"uid":"34FF6E06504E393846420243","type":"set_threshold","threshold":500}
+[SpotTrack][RX]: {"uid":"34FF6E06504E393846420243"}
 ```
 #### set_parked
 ```
-[SpotTrack][TX]: {"uid":"34FF7206504E393854410243","type":"set_parked","is_parked_set":true}
-[SpotTrack][RX]: {"uid":"34FF7206504E393854410243"}
+[SpotTrack][TX]: {"uid":"34FF6E06504E393846420243","type":"set_parked","is_parked_set":true}
+[SpotTrack][RX]: {"uid":"34FF6E06504E393846420243"}
 ```
 #### set_reserved
 ```
-[SpotTrack][TX]: {"uid":"34FF7206504E393854410243","type":"set_parked","is_reserved":true}
-[SpotTrack][RX]: {"uid":"34FF7206504E393854410243"}
+[SpotTrack][TX]: {"uid":"34FF6E06504E393846420243","type":"set_parked","is_reserved":true}
+[SpotTrack][RX]: {"uid":"34FF6E06504E393846420243"}
 ```
 
 ### Rest API
