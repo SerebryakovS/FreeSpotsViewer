@@ -15,28 +15,27 @@ int PrettyPrintJSON(const char* InputJson, char* OutputBuffer, size_t BufferSize
     return 0; 
 };
 
-int ExtractJson(const char *InputBuffer, int InputSize, char *OutputBuffer, int OutputBufferSize) {
-    bool JsonStart = false;
-    int RX_Index = 0;
-    memset(OutputBuffer, 0, OutputBufferSize);
+int ExtractJson(const char *InputBuffer, int InputSize, char *OutputBuffer, int OutputBufferSize, bool *JsonStart, int *RX_Index) {
     for (int Idx = 0; Idx < InputSize; ++Idx) {
-        if (InputBuffer[Idx] == '{') {
-            JsonStart = true;
-            RX_Index = 0;
+        if (InputBuffer[Idx] == '{' && !*JsonStart) {
+            *JsonStart = true;
+            *RX_Index = 0;
         };
-        if (JsonStart) {
-            OutputBuffer[RX_Index++] = InputBuffer[Idx];
+        if (*JsonStart) {
+            OutputBuffer[*RX_Index] = InputBuffer[Idx];
+            (*RX_Index)++;
             if (InputBuffer[Idx] == '}') {
-                OutputBuffer[RX_Index] = '\0';
+                OutputBuffer[*RX_Index] = '\0';
                 printf("[%s][RX]: %s\n", PRINT_TAG, OutputBuffer);
-                JsonStart = false;
-                RX_Index = 0; 
+                *JsonStart = false;
+                return 1;
             };
         };
-        if (RX_Index >= OutputBufferSize - 1) {
-            RX_Index = 0;
-            JsonStart = false;
+        if (*RX_Index >= OutputBufferSize - 1) {
+            *RX_Index = 0;
+            *JsonStart = false;
             memset(OutputBuffer, 0, OutputBufferSize);
         };
     };
+    return 0;
 };
