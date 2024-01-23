@@ -34,7 +34,7 @@ bool ReadFromRs485(char *ResponseBuffer, size_t ResponseBufferSize) {
     int BytesRead = read(UartFd, TempBuffer, sizeof(TempBuffer) - 1);
     if (BytesRead > 0) {
         TempBuffer[BytesRead] = '\0';
-        return ExtractJson(TempBuffer, BytesRead, ResponseBuffer, ResponseBufferSize);
+        return ExtractJsonBlockRead(TempBuffer, BytesRead, ResponseBuffer, ResponseBufferSize);
     } else if (BytesRead < 0 && errno != EAGAIN && errno != EWOULDBLOCK) {
         snprintf(ResponseBuffer, ResponseBufferSize, "{\"error\":\"READ_ERR\"}\n");
     } else {
@@ -85,10 +85,15 @@ int RunRs485Controller( void ) {
     gpiod_line_request_output(GpioLine, "REDE", 0);
     gpiod_line_set_value(GpioLine, 0);
 
-    int InputFdUsed = WebToRs485ReadFd != -1 ? WebToRs485ReadFd : STDIN_FILENO;
-
-    //int Flags = fcntl(InputFdUsed, F_GETFL, 0);
-    //fcntl(InputFdUsed, F_SETFL, Flags | O_NONBLOCK);
+    int InputFdUsed;
+    if (WebToRs485ReadFd != -1){
+        InputFdUsed = WebToRs485ReadFd;
+    } else {
+        InputFdUsed = STDIN_FILENO;
+        int Flags = fcntl(InputFdUsed, F_GETFL, 0);
+        fcntl(InputFdUsed, F_SETFL, Flags | O_NONBLOCK);
+    };
+    //int InputFdUsed = WebToRs485ReadFd != -1 ? WebToRs485ReadFd : STDIN_FILENO;
 
     char RX_Buffer[RS485_BUFFER_LEN]; memset(RX_Buffer, 0, RS485_BUFFER_LEN);
     char TX_Buffer[RS485_BUFFER_LEN]; memset(TX_Buffer, 0, RS485_BUFFER_LEN);
@@ -108,7 +113,7 @@ int RunRs485Controller( void ) {
                     int BytesRead = read(UartFd, TempBuffer, sizeof(TempBuffer) - 1);
                     if (BytesRead > 0) {
                         TempBuffer[BytesRead] = '\0';
-                        if (ExtractJson(TempBuffer, BytesRead, RX_Buffer, RS485_BUFFER_LEN, &JsonStart, &RX_Index)) {
+                        if (ExtractJsonNonBlockRead(TempBuffer, BytesRead, RX_Buffer, RS485_BUFFER_LEN, &JsonStart, &RX_Index)) {
                             printf("[%s][RX]: %s\n", PRINT_TAG, RX_Buffer);
                         };
                     };
