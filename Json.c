@@ -15,7 +15,7 @@ int PrettyPrintJSON(const char* InputJson, char* OutputBuffer, size_t BufferSize
     return 0; 
 };
 
-int ExtractJsonBlockRead(const char *InputBuffer, int InputSize, char *OutputBuffer, int OutputBufferSize) {
+bool ExtractJsonBlockRead(const char *InputBuffer, int InputSize, char *OutputBuffer, int OutputBufferSize) {
     bool JsonStart = false;
     int RX_Index = 0;
     memset(OutputBuffer, 0, OutputBufferSize);
@@ -31,17 +31,20 @@ int ExtractJsonBlockRead(const char *InputBuffer, int InputSize, char *OutputBuf
                 printf("[%s][RX]: %s\n", PRINT_TAG, OutputBuffer);
                 JsonStart = false;
                 RX_Index = 0; 
+                return true;
             };
         };
-        if (RX_Index >= OutputBufferSize - 1) {
+        if (RX_Index >= OutputBufferSize - 1 && OutputBuffer != NULL) {
             RX_Index = 0;
             JsonStart = false;
             memset(OutputBuffer, 0, OutputBufferSize);
         };
     };
+    printf("[%s]: Json parsing failed\n", PRINT_TAG);
+    return false;
 };
 
-int ExtractJsonNonBlockRead(const char *InputBuffer, int InputSize, char *OutputBuffer, int OutputBufferSize, bool *JsonStart, int *RX_Index) {
+bool ExtractJsonNonBlockRead(const char *InputBuffer, int InputSize, char *OutputBuffer, int OutputBufferSize, bool *JsonStart, int *RX_Index) {
     for (int Idx = 0; Idx < InputSize; ++Idx) {
         if (InputBuffer[Idx] == '{' && !*JsonStart) {
             *JsonStart = true;
@@ -54,7 +57,7 @@ int ExtractJsonNonBlockRead(const char *InputBuffer, int InputSize, char *Output
                 OutputBuffer[*RX_Index] = '\0';
                 printf("[%s][RX]: %s\n", PRINT_TAG, OutputBuffer);
                 *JsonStart = false;
-                return 1;
+                return true;
             };
         };
         if (*RX_Index >= OutputBufferSize - 1) {
@@ -63,5 +66,5 @@ int ExtractJsonNonBlockRead(const char *InputBuffer, int InputSize, char *Output
             memset(OutputBuffer, 0, OutputBufferSize);
         };
     };
-    return 0;
+    return false;
 };

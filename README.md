@@ -7,13 +7,36 @@ Let's say maximum packet payload is 256 bytes, then: 256 * (1+8+1) / 115200 = 23
 The theoretical limit = 256 devices that 1/8th load each on RS-485 line;
 Maximum delay for devices: 256 * 30[ms] = 7680[ms];
 
+Server       Client
+     <-------RTS
+  CTS--------> 
+     <-------PACK
+  ACK-------->
 
 ### RS-485 API
 
-#### get_status
+#### get_status (server request)
 ```
 [SpotTrack][TX]: {"uid":"34FF6E06504E393846420243","type":"get_status"}
-[SpotTrack][RX]: {"uid":"34FF6E06504E393846420243","threshold":1000,"measured_1":1230,"measured_2":   0,"is_parking_clear":true,"is_parked_set":true,"is_reserved":false}
+[SpotTrack][RX]: [SpotTrack][RX]: {
+        "uid":"34FF6E06504E393846420243",
+        "threshold":1000,
+        "measured_1":53,
+        "measured_2":0,
+        "is_parking_clear":false,
+        "is_parked_set":false,
+        "is_reserved":false,
+        "is_free": false
+}
+```
+#### set_status (client poll)
+```
+[SpotTrack][RX]: [SpotTrack][RX]: {
+        "type" : "set_status",
+        "uid":"34FF6E06504E393846420243",
+        "is_free": false
+}
+[SpotTrack][TX]: {"uid":"34FF6E06504E393846420243","type":"ACK"}
 ```
 #### ping
 ```
@@ -32,7 +55,7 @@ Maximum delay for devices: 256 * 30[ms] = 7680[ms];
 ```
 #### set_reserved
 ```
-[SpotTrack][TX]: {"uid":"34FF6E06504E393846420243","type":"set_parked","is_reserved":true}
+[SpotTrack][TX]: {"uid":"34FF6E06504E393846420243","type":"set_reserved","is_reserved":true}
 [SpotTrack][RX]: {"uid":"34FF6E06504E393846420243"}
 ```
 
@@ -59,7 +82,8 @@ $ curl -X GET http://localhost:16333/get_status?device_uid=34FF7206504E393854410
     "measured_2": 0,
     "is_parking_clear": false,
     "is_parked_set": false,
-    "is_reserved" : false
+    "is_reserved" : false,
+    "is_free": false
 }
 ```
 #### POST /set_parked

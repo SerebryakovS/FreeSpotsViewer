@@ -45,7 +45,7 @@ const char* GetDeviceStatus(const char* DeviceUid) {
     char Rs485Cmd[256];
     snprintf(Rs485Cmd, sizeof(Rs485Cmd), "{\"uid\":\"%s\",\"type\":\"get_status\"}\n", DeviceUid);
     if (Rs485MakeIO(Rs485Cmd, WebResponseBuffer, sizeof(WebResponseBuffer))){
-        const char *IsParkedSetKey = "\"is_parked_set\":";
+        const char *IsParkedSetKey = "\"is_free\":";
         char *IsFound = strstr(WebResponseBuffer, IsParkedSetKey);
         if (IsFound) {
             IsFound += strlen(IsParkedSetKey);
@@ -229,7 +229,7 @@ int RunWebServer(){
         if (NULL == Daemon){ 
             return -EXIT_FAILURE;
         };
-        printf("[%s][RX]: Server running on port: %d\n", PRINT_TAG, REST_PORT);
-        RunRs485Controller();
+        printf("[%s]: Server is running on port: %d\n", PRINT_TAG, REST_PORT);
+        RunRs485Controller(WEB_MODE);
         MHD_stop_daemon(Daemon);
 };
