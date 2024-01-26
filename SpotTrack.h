@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <stdbool.h>
 #include <fcntl.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
@@ -21,10 +22,10 @@
 
 extern int WebToRs485RecvPipe[2], WebToRs485SendPipe[2], UartFd;
 
-int RunRs485Controller( void );
+int RunRs485Controller( int WORKING_MODE );
 int RunWebServer( void );
 
-bool InitPipe(int *OutPipeFds, int BindOut, int BindIn);
+bool InitPipe(int *OutPipeFds);
 
 int PrettyPrintJSON(const char*, char*, size_t);
 

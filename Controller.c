@@ -101,7 +101,7 @@ bool Rs485MakeIO(char *Rs485Cmd, char *ResponseBuffer, size_t ResponseBufferSize
 };
 //
 bool HandleClientStatusBeacon(char *ClientRequest, int InputFd) {
-    TempFd = WebToRs485SendPipe[1];
+    int TempFd = WebToRs485SendPipe[1];
     WebToRs485SendPipe[1] = InputFd;
     const char *TypeField = "\"type\":\"set_status\"";
     const char *UidField = "\"uid\":\"";
@@ -122,7 +122,7 @@ bool HandleClientStatusBeacon(char *ClientRequest, int InputFd) {
     if (IsFreeStart) {
         IsFreeStart += strlen(IsFreeField);
         if (strncmp(IsFreeStart, "true", 4) == 0) {
-            isFree = true;
+            IsFree = true;
         };
     } else {
         return false;
@@ -182,7 +182,7 @@ int RunRs485Controller( int WORKING_MODE ) {
                     SetTimeValue(&LastRxTime);
                     TempBuffer[BytesRead] = '\0';
                     if (ExtractJsonNonBlockRead(TempBuffer, BytesRead, RX_Buffer, RS485_BUFFER_LEN, &JsonStart, &RX_Index)){
-                        if (HandleClientStatusBeacon(InputFd)){
+                        if (HandleClientStatusBeacon(RX_Buffer ,InputFd)){
                             continue;
                         };
                         if (WORKING_MODE == WEB_MODE) {
