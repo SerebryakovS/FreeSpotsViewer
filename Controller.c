@@ -34,9 +34,9 @@ bool InitPipe(int *OutPipeFds){
 //
 void SetTimeValue(uint32_t *VariableToSet){
     struct timeval Now; gettimeofday(&Now, NULL);
-    *VariableToSet = now.tv_sec * 1000000 + now.tv_usec;
+    *VariableToSet = Now.tv_sec * 1000000 + Now.tv_usec;
 };
-bool Rs485ChannelCheck(uint32_t *VariableToSet) {
+bool Rs485ChannelCheck() {
     uint32_t CurrentTime;
     SetTimeValue(&CurrentTime);
     return (CurrentTime - LastRxTime) >= 100;
