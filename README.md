@@ -100,6 +100,17 @@ $ curl -X GET http://localhost:16333/free_spots_count
 {
     "free_spots_count" : 2
 }
+#### GET /free_spots
+```
+$ curl -X GET http://localhost:16333/free_spots
+```
+{
+    "list_devices" :[
+        "34FF7206504E393854410243",
+        "34FF6E06504E393817500343",
+        "34FF6E06504E393846420243"
+    ]
+}
 #### POST /set_reserved
 ```
 $ curl -X POST -d '{"uid":"34FF7206504E393854410243","is_reserved":true}' http://localhost:16333/set_reserved

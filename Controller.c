@@ -52,25 +52,12 @@ bool WriteToRs485(const char *Command, char *ResponseBuffer, size_t ResponseBuff
         if (BackOffTime == 0) {
             continue;
         };
-        fd_set WriteFds; FD_ZERO(&WriteFds); FD_SET(WebToRs485SendPipe[1], &WriteFds);
-        struct timeval Timeout;
-        Timeout.tv_sec = 2; Timeout.tv_usec = 0;
-        int SelectResult = select(WebToRs485SendPipe[1] + 1, NULL, &WriteFds, NULL, &Timeout);
-        if (SelectResult > 0) {
-            int BytesWrite = write(WebToRs485SendPipe[1], Command, strlen(Command));
-            if (BytesWrite <= 0) {
-                snprintf(ResponseBuffer, ResponseBufferSize, "{\"error\":\"WRITE_ERR\"}\n");
-                return false;
-            };
-            return true;
-        } else {
-            if (SelectResult == 0) {
-                snprintf(ResponseBuffer, ResponseBufferSize, "{\"error\":\"TIMEOUT_ERR\"}\n");
-            } else {
-                snprintf(ResponseBuffer, ResponseBufferSize, "{\"error\":\"SELECT_ERR\"}\n");
-            };
+        int BytesWrite = write(WebToRs485SendPipe[1], Command, strlen(Command));
+        if (BytesWrite <= 0) {
+            snprintf(ResponseBuffer, ResponseBufferSize, "{\"error\":\"WRITE_ERR\"}\n");
             return false;
         };
+        return true;
     };
 };
 //
