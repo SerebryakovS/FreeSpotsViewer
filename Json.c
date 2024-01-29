@@ -18,17 +18,22 @@ int PrettyPrintJSON(const char* InputJson, char* OutputBuffer, size_t BufferSize
 bool ExtractJsonBlockRead(const char *InputBuffer, int InputSize, char *OutputBuffer, int OutputBufferSize) {
     bool JsonStart = false;
     int RX_Index = 0;
-    memset(OutputBuffer, 0, OutputBufferSize);
+    if (OutputBufferSize > 0){
+        memset(OutputBuffer, 0, OutputBufferSize);
+    };
     for (int Idx = 0; Idx < InputSize; ++Idx) {
         if (InputBuffer[Idx] == '{') {
             JsonStart = true;
             RX_Index = 0;
         };
         if (JsonStart) {
-            OutputBuffer[RX_Index++] = InputBuffer[Idx];
+            if (OutputBufferSize > 0){
+                OutputBuffer[RX_Index++] = InputBuffer[Idx];
+            };
             if (InputBuffer[Idx] == '}') {
-                OutputBuffer[RX_Index] = '\0';
-                printf("[%s][RX]: %s\n", PRINT_TAG, OutputBuffer);
+                if (OutputBufferSize > 0){
+                    OutputBuffer[RX_Index] = '\0';
+                };
                 JsonStart = false;
                 RX_Index = 0; 
                 return true;
@@ -55,7 +60,6 @@ bool ExtractJsonNonBlockRead(const char *InputBuffer, int InputSize, char *Outpu
             (*RX_Index)++;
             if (InputBuffer[Idx] == '}') {
                 OutputBuffer[*RX_Index] = '\0';
-                printf("[%s][RX]: %s\n", PRINT_TAG, OutputBuffer);
                 *JsonStart = false;
                 return true;
             };

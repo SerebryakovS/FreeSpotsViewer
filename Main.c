@@ -12,7 +12,6 @@ int main(int argc, char *argv[]) {
     if (argc == 1) {
         return RunWebServer();
     } else if (argc > 1 && strcmp(argv[1], "debug") == 0) {
-        WebToRs485SendPipe[0]  = -1;
         return RunRs485Controller(DEBUG_MODE);
     };
     return EXIT_SUCCESS;

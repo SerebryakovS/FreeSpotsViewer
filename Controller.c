@@ -182,6 +182,7 @@ int RunRs485Controller( int WORKING_MODE ) {
                     SetTimeValue(&LastRxTime);
                     TempBuffer[BytesRead] = '\0';
                     if (ExtractJsonNonBlockRead(TempBuffer, BytesRead, RX_Buffer, RS485_BUFFER_LEN, &JsonStart, &RX_Index)){
+                        printf("[%s][RX]: %s\n", PRINT_TAG, RX_Buffer);
                         if (HandleClientStatusBeacon(RX_Buffer ,InputFd)){
                             continue;
                         };
@@ -198,7 +199,6 @@ int RunRs485Controller( int WORKING_MODE ) {
                     if (ExtractJsonBlockRead(TX_Buffer, BytesRead, NULL, 0)){
                         printf("[%s][TX]: %s", PRINT_TAG, TX_Buffer);
                         gpiod_line_set_value(GpioLine, 1);
-
                         for (size_t Idx = 0; Idx < strlen(TX_Buffer); ++Idx) {
                             write(UartFd, &TX_Buffer[Idx], 1);
                             usleep(10);
