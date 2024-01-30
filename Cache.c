@@ -12,7 +12,7 @@ bool InitCacheWorkingSpots() {
     char DeviceUid[25]; int Idx = 0;
     for (int Idx=0; Idx < SPOTS_MAX_COUNT; Idx++){
         WorkingSpots[Idx].DeviceUid[0] = '\0';
-        WorkingSpots[Idx].State = false;
+        WorkingSpots[Idx].State = true;
     };
     while (fgets(DeviceUid, sizeof(DeviceUid), KnownDevices)) {
         DeviceUid[strcspn(DeviceUid, "\n")] = 0;
@@ -33,7 +33,7 @@ bool InitCacheWorkingSpots() {
 int GetCacheFreeSpotsCount(){
     int FreeCounter = 0;
     for (int Idx = 0; Idx < SPOTS_MAX_COUNT && WorkingSpots[Idx].DeviceUid[0] != '\0'; Idx++) {
-        if (WorkingSpots[Idx].State == false){
+        if (WorkingSpots[Idx].State == true){
             FreeCounter++;
         };
     };

@@ -38,19 +38,18 @@ const char* GetFreeSpots() {
     const char *FormatDevice = "        \"%s\"";
     memset(WebResponseBuffer, 0, WEB_RESPONSE_SIZE);
     strncat(WebResponseBuffer, FormatStart, WEB_RESPONSE_SIZE - strlen(WebResponseBuffer) - 1);
-    bool isFirst = true; // Used to handle comma placement
-
+    bool IsFirst = true;
     for (int Idx = 0; Idx < SPOTS_MAX_COUNT; ++Idx) {
         if (WorkingSpots[Idx].DeviceUid[0] != '\0' && WorkingSpots[Idx].State) {
-            if (!isFirst) {
+            if (!IsFirst) {
                 strncat(WebResponseBuffer, ",\n", WEB_RESPONSE_SIZE - strlen(WebResponseBuffer) - 1);
-            }
+            };
             char DeviceEntry[30];
             snprintf(DeviceEntry, sizeof(DeviceEntry), FormatDevice, WorkingSpots[Idx].DeviceUid);
             strncat(WebResponseBuffer, DeviceEntry, WEB_RESPONSE_SIZE - strlen(WebResponseBuffer) - 1);
-            isFirst = false;
-        }
-    }
+            IsFirst = false;
+        };
+    };
     strncat(WebResponseBuffer, FormatEnd, WEB_RESPONSE_SIZE - strlen(WebResponseBuffer) - 1);
     return WebResponseBuffer;
 }
@@ -110,6 +109,8 @@ static int HandleGetRequest(const struct MHD_Connection *Connection, const char*
     const char* ResponseStr = NULL;
     if (strncmp(Url, "/list_devices", strlen("/list_devices")) == 0) {
         ResponseStr = GetListOfDevices();
+    } else if (strncmp(Url, "/free_spots", strlen("/free_spots")) == 0) {
+        ResponseStr = GetFreeSpots();
     } else if (strncmp(Url, "/get_status", strlen("/get_status")) == 0) {
         const char* DeviceUid = MHD_lookup_connection_value(Connection, MHD_GET_ARGUMENT_KIND, "device_uid");
         ResponseStr = GetDeviceStatus(DeviceUid);
