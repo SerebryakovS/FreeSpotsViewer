@@ -6,7 +6,8 @@
 volatile uint32_t LastRxTime = 0;
 
 int SetupUart() {
-    int _UartFd = open(RS485_UART_DEVICE, O_RDWR | O_NOCTTY | O_NDELAY);
+    int _UartFd = open(RS485_UART_DEVICE, O_RDWR | O_NOCTTY);
+    //int _UartFd = open(RS485_UART_DEVICE, O_RDWR | O_NOCTTY | O_NDELAY); // non-blocking read
     if (_UartFd == -1) {
         perror("Unable to open UART");
         return -EXIT_FAILURE;
@@ -39,7 +40,7 @@ void SetTimeValue(uint32_t *VariableToSet){
 bool Rs485ChannelCheck() {
     uint32_t CurrentTime;
     SetTimeValue(&CurrentTime);
-    return (CurrentTime - LastRxTime) >= 100;
+    return (CurrentTime - LastRxTime) >= 50;
 };
 //
 bool WriteToRs485(const char *Command, char *ResponseBuffer, size_t ResponseBufferSize, int OutFd) {
@@ -49,7 +50,7 @@ bool WriteToRs485(const char *Command, char *ResponseBuffer, size_t ResponseBuff
             usleep(1);
             BackOffTime--;
         };
-        if (BackOffTime == 0) {
+        if (BackOffTime > 0) {
             continue;
         };
         int BytesWrite = write(OutFd, Command, strlen(Command));
@@ -66,7 +67,7 @@ bool WriteToRs485(const char *Command, char *ResponseBuffer, size_t ResponseBuff
 bool ReadFromRs485(char *ResponseBuffer, size_t ResponseBufferSize, int InFd) {
     fd_set ReadFds; FD_ZERO(&ReadFds); FD_SET(InFd, &ReadFds);
     struct timeval Timeout;
-    Timeout.tv_sec = 2; Timeout.tv_usec = 0;
+    Timeout.tv_sec = 5; Timeout.tv_usec = 0;
     int SelectResult = select(InFd + 1, &ReadFds, NULL, NULL, &Timeout);
     if (SelectResult > 0) {
         int BytesRead = read(InFd, ResponseBuffer, ResponseBufferSize);
@@ -130,7 +131,7 @@ bool HandleClientStatusBeacon(char *ClientRequest, int InputFd) {
     SetCacheSpotState(Uid, IsFree);
     char AckMessage[RS485_BUFFER_LEN];
     snprintf(AckMessage, sizeof(AckMessage), "{\"uid\":\"%s\",\"type\":\"ACK\"}\n", Uid);
-    WriteToRs485(AckMessage, NULL, 0, UartFd);
+    WriteToRs485(AckMessage, NULL, 0, InputFd);
     return true;
 };
 //
@@ -158,11 +159,10 @@ int RunRs485Controller( int WORKING_MODE ) {
     gpiod_line_request_output(GpioLine, "REDE", 0);
     gpiod_line_set_value(GpioLine, 0);
 
-    int InputFd  = WORKING_MODE == WEB_MODE ? WebToRs485SendPipe[0] : STDIN_FILENO;
-    int OutputFd = WORKING_MODE == WEB_MODE ? WebToRs485RecvPipe[1] : STDOUT_FILENO;
 
-    //int flags = fcntl(InputFd, F_GETFL, 0);
-    //fcntl(InputFd, F_SETFL, flags | O_NONBLOCK);
+    if (WORKING_MODE == DEBUG_MODE){
+        dup2(WebToRs485SendPipe[0], STDIN_FILENO); // stdin redirect
+    };
 
     char RX_Buffer[RS485_BUFFER_LEN]; memset(RX_Buffer, 0, RS485_BUFFER_LEN);
     char TX_Buffer[RS485_BUFFER_LEN]; memset(TX_Buffer, 0, RS485_BUFFER_LEN);
@@ -171,28 +171,28 @@ int RunRs485Controller( int WORKING_MODE ) {
     while (1) {
         FD_ZERO(&UartReadFd);
         FD_SET(UartFd, &UartReadFd);
-        FD_SET(InputFd, &UartReadFd);
+        FD_SET(WebToRs485SendPipe[0], &UartReadFd);
 
         if (select(UartFd + 1, &UartReadFd, NULL, NULL, NULL) > 0) {
             if (FD_ISSET(UartFd, &UartReadFd)) {
-                char TempBuffer[RS485_BUFFER_LEN]; memset(RX_Buffer, 0, RS485_BUFFER_LEN);
+                char TempBuffer[RS485_BUFFER_LEN]; memset(TempBuffer, 0, RS485_BUFFER_LEN);
                 int BytesRead = read(UartFd, TempBuffer, sizeof(TempBuffer) - 1);
                 if (BytesRead > 0) {
                     SetTimeValue(&LastRxTime); 
                     TempBuffer[BytesRead] = '\0';
                     if (ExtractJsonNonBlockRead(TempBuffer, BytesRead, RX_Buffer, RS485_BUFFER_LEN, &JsonStart, &RX_Index)){
                         printf("[%s][RX]: %s\n", PRINT_TAG, RX_Buffer);
-                        if (HandleClientStatusBeacon(RX_Buffer, InputFd)){
+                        if (HandleClientStatusBeacon(RX_Buffer, WebToRs485SendPipe[1])){
                             continue;
                         };
                         if (WORKING_MODE == WEB_MODE) {
-                            write(OutputFd, RX_Buffer, strlen(RX_Buffer));
+                            write(WebToRs485RecvPipe[1], RX_Buffer, strlen(RX_Buffer));
                         };
                     };
                 };
             };
-            if (FD_ISSET(InputFd, &UartReadFd)) {
-                int BytesRead = read(InputFd, TX_Buffer, sizeof(TX_Buffer) - 1);
+            if (FD_ISSET(WebToRs485SendPipe[0], &UartReadFd)) {
+                int BytesRead = read(WebToRs485SendPipe[0], TX_Buffer, sizeof(TX_Buffer) - 1);
                 if (BytesRead > 0) {
                     TX_Buffer[BytesRead] = '\0';
                     if (ExtractJsonBlockRead(TX_Buffer, BytesRead, NULL, 0)){
@@ -202,6 +202,7 @@ int RunRs485Controller( int WORKING_MODE ) {
                             write(UartFd, &TX_Buffer[Idx], 1);
                             usleep(10);
                         };
+                        usleep(10);
                         gpiod_line_set_value(GpioLine, 0);
                     };
                 };

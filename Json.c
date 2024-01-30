@@ -51,23 +51,25 @@ bool ExtractJsonBlockRead(const char *InputBuffer, int InputSize, char *OutputBu
 
 bool ExtractJsonNonBlockRead(const char *InputBuffer, int InputSize, char *OutputBuffer, int OutputBufferSize, bool *JsonStart, int *RX_Index) {
     for (int Idx = 0; Idx < InputSize; ++Idx) {
-        if (InputBuffer[Idx] == '{' && !*JsonStart) {
+        if (InputBuffer[Idx] == '{') {
             *JsonStart = true;
             *RX_Index = 0;
-        };
+        }
         if (*JsonStart) {
-            OutputBuffer[*RX_Index] = InputBuffer[Idx];
-            (*RX_Index)++;
-            if (InputBuffer[Idx] == '}') {
-                OutputBuffer[*RX_Index] = '\0';
+            if (*RX_Index < OutputBufferSize - 1) {
+                OutputBuffer[*RX_Index] = InputBuffer[Idx];
+                (*RX_Index)++;
+                if (InputBuffer[Idx] == '}') {
+                    OutputBuffer[*RX_Index] = '\0';
+                    *JsonStart = false;
+                    return true;
+                }
+            } else {
                 *JsonStart = false;
-                return true;
+                *RX_Index = 0;
+                memset(OutputBuffer, 0, OutputBufferSize);
+                return false; 
             };
-        };
-        if (*RX_Index >= OutputBufferSize - 1) {
-            *RX_Index = 0;
-            *JsonStart = false;
-            memset(OutputBuffer, 0, OutputBufferSize);
         };
     };
     return false;

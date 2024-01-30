@@ -32,8 +32,8 @@ int PrettyPrintJSON(const char*, char*, size_t);
 bool ExtractJsonBlockRead(const char *InputBuffer, int InputSize, char *OutputBuffer, int OutputBufferSize);
 bool ExtractJsonNonBlockRead(const char *InputBuffer, int InputSize, char *OutputBuffer, int OutputBufferSize, bool *JsonStart, int *RX_Index);
 
-bool WriteToRs485(const char *Command, char *ResponseBuffer, size_t ResponseBufferSize, OutFd);
-bool ReadFromRs485(char *ResponseBuffer, size_t ResponseBufferSize, InFd);
+bool WriteToRs485(const char *Command, char *ResponseBuffer, size_t ResponseBufferSize, int OutFd);
+bool ReadFromRs485(char *ResponseBuffer, size_t ResponseBufferSize, int InFd);
 bool Rs485MakeIO(char *Rs485Cmd, char *ResponseBuffer, size_t ResponseBufferSize);
 
 bool HandleClientStatusBeacon(char *ClientRequest, int InputFd);

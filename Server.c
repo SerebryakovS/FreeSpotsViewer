@@ -32,6 +32,29 @@ const char* GetFreeSpotsCount() {
     return WebResponseBuffer;
 };
 //
+const char* GetFreeSpots() {
+    const char *FormatStart = "{\n    \"free_spots\" :[\n";
+    const char *FormatEnd = "\n    ]\n}";
+    const char *FormatDevice = "        \"%s\"";
+    memset(WebResponseBuffer, 0, WEB_RESPONSE_SIZE);
+    strncat(WebResponseBuffer, FormatStart, WEB_RESPONSE_SIZE - strlen(WebResponseBuffer) - 1);
+    bool isFirst = true; // Used to handle comma placement
+
+    for (int Idx = 0; Idx < SPOTS_MAX_COUNT; ++Idx) {
+        if (WorkingSpots[Idx].DeviceUid[0] != '\0' && WorkingSpots[Idx].State) {
+            if (!isFirst) {
+                strncat(WebResponseBuffer, ",\n", WEB_RESPONSE_SIZE - strlen(WebResponseBuffer) - 1);
+            }
+            char DeviceEntry[30];
+            snprintf(DeviceEntry, sizeof(DeviceEntry), FormatDevice, WorkingSpots[Idx].DeviceUid);
+            strncat(WebResponseBuffer, DeviceEntry, WEB_RESPONSE_SIZE - strlen(WebResponseBuffer) - 1);
+            isFirst = false;
+        }
+    }
+    strncat(WebResponseBuffer, FormatEnd, WEB_RESPONSE_SIZE - strlen(WebResponseBuffer) - 1);
+    return WebResponseBuffer;
+}
+//
 bool StrToBool(const char *StrBool) {
     if (strcmp(StrBool, "true") == 0) {
         return true;
