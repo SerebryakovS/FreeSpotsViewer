@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <pthread.h>
 
 #define REST_PORT         16333
 #define PRINT_TAG         "SpotTrack"
@@ -14,12 +15,13 @@
 #define RS485_ENABLE_PIN  12
 #define RS485_UART_DEVICE "/dev/ttyAMA0"
 #define RS485_BUFFER_LEN  1024
-#define BACKOFF_TIME      30000 
+#define BACKOFF_TIME      10000 
 #define WEB_RESPONSE_SIZE 1024
 #define SPOTS_MAX_COUNT   256
 #define DEBUG_MODE        1
 #define WEB_MODE          2
 
+pthread_mutex_t uartMutex = PTHREAD_MUTEX_INITIALIZER;
 extern int WebToRs485RecvPipe[2], WebToRs485SendPipe[2], UartFd;
 
 int RunRs485Controller( int WORKING_MODE );

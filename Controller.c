@@ -18,7 +18,7 @@ int SetupUart() {
     Options.c_iflag = IGNPAR; // Ignore parity errors
     Options.c_oflag = 0;
     Options.c_lflag = 0;
-    tcflush(_UartFd, TCIFLUSH);
+    tcflush(_UartFd, TCIOFLUSH);
     tcsetattr(_UartFd, TCSANOW, &Options);
     return _UartFd;
 };
@@ -45,6 +45,7 @@ bool Rs485ChannelCheck() {
 //
 bool WriteToRs485(const char *Command, char *ResponseBuffer, size_t ResponseBufferSize, int OutFd) {
     int BackOffTime = BACKOFF_TIME;
+    pthread_mutex_lock(&UartMutex);
     while (true){
         while (Rs485ChannelCheck() && BackOffTime > 0) {
             usleep(1);
@@ -54,6 +55,7 @@ bool WriteToRs485(const char *Command, char *ResponseBuffer, size_t ResponseBuff
             continue;
         };
         int BytesWrite = write(OutFd, Command, strlen(Command));
+        tcflush(OutFd, TCOFLUSH);
         if (BytesWrite <= 0) {
             if (ResponseBuffer != NULL){
                 snprintf(ResponseBuffer, ResponseBufferSize, "{\"error\":\"WRITE_ERR\"}\n");
@@ -62,6 +64,8 @@ bool WriteToRs485(const char *Command, char *ResponseBuffer, size_t ResponseBuff
         };
         return true;
     };
+    usleep(200);
+    pthread_mutex_unlock(&UartMutex);
 };
 //
 bool ReadFromRs485(char *ResponseBuffer, size_t ResponseBufferSize, int InFd) {
