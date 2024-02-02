@@ -4,6 +4,7 @@
 #include <gpiod.h>
 
 volatile uint32_t LastRxTime = 0;
+pthread_mutex_t UartMutex;
 
 int SetupUart() {
     int _UartFd = open(RS485_UART_DEVICE, O_RDWR | O_NOCTTY);
@@ -46,6 +47,7 @@ bool Rs485ChannelCheck() {
 bool WriteToRs485(const char *Command, char *ResponseBuffer, size_t ResponseBufferSize, int OutFd) {
     int BackOffTime = BACKOFF_TIME;
     pthread_mutex_lock(&UartMutex);
+    bool ReturnValue = true;
     while (true){
         while (Rs485ChannelCheck() && BackOffTime > 0) {
             usleep(1);
@@ -60,12 +62,13 @@ bool WriteToRs485(const char *Command, char *ResponseBuffer, size_t ResponseBuff
             if (ResponseBuffer != NULL){
                 snprintf(ResponseBuffer, ResponseBufferSize, "{\"error\":\"WRITE_ERR\"}\n");
             };
-            return false;
+            ReturnValue = false;
         };
-        return true;
+        break;
     };
     usleep(200);
     pthread_mutex_unlock(&UartMutex);
+    return ReturnValue;
 };
 //
 bool ReadFromRs485(char *ResponseBuffer, size_t ResponseBufferSize, int InFd) {
@@ -140,6 +143,7 @@ bool HandleClientStatusBeacon(char *ClientRequest, int InputFd) {
 };
 //
 int RunRs485Controller( int WORKING_MODE ) {
+    pthread_mutex_init(&UartMutex, NULL)
     fd_set UartReadFd;
     UartFd = SetupUart();
     if (UartFd < 0) {

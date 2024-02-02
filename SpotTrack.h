@@ -21,7 +21,7 @@
 #define DEBUG_MODE        1
 #define WEB_MODE          2
 
-pthread_mutex_t UartMutex = PTHREAD_MUTEX_INITIALIZER;
+extern pthread_mutex_t UartMutex;
 extern int WebToRs485RecvPipe[2], WebToRs485SendPipe[2], UartFd;
 
 int RunRs485Controller( int WORKING_MODE );
