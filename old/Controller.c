@@ -15,7 +15,7 @@ int SetupUart() {
     };
     struct termios Options;
     tcgetattr(_UartFd, &Options);
-    Options.c_cflag = B115200 | CS8 | CLOCAL | CREAD; 
+    Options.c_cflag = B115200 | CS8 | CLOCAL | CREAD;
     Options.c_iflag = IGNPAR; // Ignore parity errors
     Options.c_oflag = 0;
     Options.c_lflag = 0;
@@ -27,7 +27,7 @@ int SetupUart() {
 bool InitPipe(int *OutPipeFds){
     int PipeFds[2];
     if (pipe(PipeFds) == -1) {
-        return false; 
+        return false;
     };
     OutPipeFds[0]  = PipeFds[0];
     OutPipeFds[1]  = PipeFds[1];
@@ -120,7 +120,7 @@ bool HandleClientStatusBeacon(char *ClientRequest, int InputFd) {
     char Uid[25] = {0};
     char *UidStart = strstr(ClientRequest, UidField);
     if (UidStart) {
-        UidStart += strlen(UidField); 
+        UidStart += strlen(UidField);
         sscanf(UidStart, "%24[^\"]", Uid);
     } else {
         return false;
@@ -186,7 +186,7 @@ int RunRs485Controller( int WORKING_MODE ) {
                 char TempBuffer[RS485_BUFFER_LEN]; memset(TempBuffer, 0, RS485_BUFFER_LEN);
                 int BytesRead = read(UartFd, TempBuffer, sizeof(TempBuffer) - 1);
                 if (BytesRead > 0) {
-                    SetTimeValue(&LastRxTime); 
+                    SetTimeValue(&LastRxTime);
                     TempBuffer[BytesRead] = '\0';
                     if (ExtractJsonNonBlockRead(TempBuffer, BytesRead, RX_Buffer, RS485_BUFFER_LEN, &JsonStart, &RX_Index)){
                         printf("[%s][RX]: %s\n", PRINT_TAG, RX_Buffer);
