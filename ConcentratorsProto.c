@@ -34,6 +34,7 @@ void RunModbusSlave(uint8_t SlaveId, UartModule *_UartModule) {
         modbus_free(ModbusContext);
         return;
     };
+    printf("Slave run\n");
     while (!IsMaster()) {
         int RequestLength = modbus_receive(ModbusContext, Query);
         if (RequestLength > 0) {
@@ -66,6 +67,7 @@ void RunModbusMaster(UartModule *_UartModule) {
         modbus_free(ModbusContext);
         return;
     };
+    printf("Master run\n");
     while (IsMaster()) {
         for (uint8_t SlaveId = 1; SlaveId <= BSLAVES_COUNT; ++SlaveId) {
             if (modbus_set_slave(ModbusContext, SlaveId) == -1) {
