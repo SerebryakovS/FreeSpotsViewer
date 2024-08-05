@@ -3,18 +3,90 @@
 
 UartModule _UartModuleA = {0};
 
+SensorData *SensorsHead = NULL;
+
+const uint32_t SlotTimeUs = SYNC_INTERVAL / SENSORS_COUNT;
+
+uint8_t LastRegisteredAddress = 0x01;
+
+
+//////////////////////////////////////////////////////////////////////////////////
+
+void AddSensor(uint8_t SensorAddress) {
+    SensorData *NewSensor = (SensorData *)malloc(sizeof(SensorData));
+    if (!NewSensor) {
+        perror("Failed to allocate memory for new sensor");
+        return;
+    };
+    NewSensor->Address = SensorAddress;
+    NewSensor->Data = 0;
+    NewSensor->InactivityCounter = 0;
+    NewSensor->NextSensor = SensorsHead;
+    SensorsHead = NewSensor;
+};
+
+void RemoveSensor(uint8_t SensorAddress) {
+    SensorData *CurrSensor = SensorsHead;
+    SensorData *PrevSensor = NULL;
+    while (CurrSensor != NULL) {
+        if (CurrSensor->Address == SensorAddress) {
+            if (PrevSensor == NULL) {
+                SensorsHead = CurrSensor->NextSensor;
+            } else {
+                PrevSensor->NextSensor = CurrSensor->NextSensor;
+            };
+            free(CurrSensor);
+            return;
+        };
+        PrevSensor = CurrSensor;
+        CurrSensor = CurrSensor->NextSensor;
+    };
+};
+
+void UpdateSensor(uint8_t SensorAddress, uint8_t SensorValue) {
+    SensorData *CurrSensor = SensorsHead;
+    while (CurrSensor != NULL) {
+        if (CurrSensor->Address == SensorAddress) {
+            CurrSensor->Data = SensorValue;
+            CurrSensor->InactivityCounter = 0;
+            return;
+        };
+        CurrSensor = CurrSensor->NextSensor;
+    };
+    AddSensor(SensorAddress);
+};
+
+void CheckInactiveSensors(uint8_t MaxInactivity) {
+    SensorData *CurrSensor = SensorsHead;
+    SensorData *PrevSensor = NULL;
+    while (CurrSensor != NULL) {
+        if (CurrSensor->InactivityCounter >= MaxInactivity) {
+            if (PrevSensor == NULL) {
+                SensorsHead = CurrSensor->NextSensor;
+            } else {
+                PrevSensor->NextSensor = CurrSensor->NextSensor;
+            };
+            SensorData *ToDelete = CurrSensor;
+            CurrSensor = CurrSensor->NextSensor;
+            free(ToDelete);
+        } else {
+            CurrSensor->InactivityCounter++;
+            PrevSensor = CurrSensor;
+            CurrSensor = CurrSensor->NextSensor;
+        };
+    };
+};
+
+//////////////////////////////////////////////////////////////////////////////////
+
 void BinaryToHex(const uint8_t *bin, size_t bin_len, char *hex) {
     const char hex_chars[] = "0123456789ABCDEF";
     for (size_t i = 0; i < bin_len; ++i) {
         hex[i * 2] = hex_chars[(bin[i] >> 4) & 0x0F];
         hex[i * 2 + 1] = hex_chars[bin[i] & 0x0F];
     };
-    hex[bin_len * 2] = '\0'; 
+    hex[bin_len * 2] = '\0';
 };
-
-const uint32_t SlotTimeUs = SYNC_INTERVAL / SENSORS_COUNT;
-
-uint8_t LastRegisteredAddress = 0x01;
 
 static inline uint8_t CalculateChecksum(const uint8_t *Data, size_t Length) {
     uint8_t Checksum = 0;
@@ -51,17 +123,18 @@ void UartRead(UartModule *_UartModule, uint8_t *ReadBuffer, struct timeval *Time
         fprintf(stderr, "Invalid UART file descriptor\n");
         return;
     };
-    fd_set ReadFds; FD_ZERO(&ReadFds); FD_SET(_UartModule->UartPortFd, &ReadFds);
+    fd_set ReadFds;
+    FD_ZERO(&ReadFds);
+    FD_SET(_UartModule->UartPortFd, &ReadFds);
     int16_t SelectResult = select(_UartModule->UartPortFd + 1, &ReadFds, NULL, NULL, Timeout);
     if (SelectResult > 0) {
         int16_t ReadCountBytes = read(_UartModule->UartPortFd, ReadBuffer, 10);
-        //printf("ReadCountBytes = %d, Buffer:%s\n", ReadCountBytes, ReadBuffer);
         if (ReadCountBytes < 0) {
             perror("Unable to read UART port");
         } else if (ReadCountBytes > 0) {
             char HexBuffer[ReadCountBytes * 2 + 1];
             BinaryToHex(ReadBuffer, ReadCountBytes, HexBuffer);
-            fprintf(stdout,"SlotIdx: %d, Received packet: %s\n", SlotIdx, HexBuffer);
+            fprintf(stdout, "SlotIdx: %d, Received packet: %s\n", SlotIdx, HexBuffer);
             if (ReadBuffer[0] == MSG_START && ReadBuffer[ReadCountBytes - 1] == MSG_END) {
                 uint8_t Address = ReadBuffer[1];
                 uint8_t Command = ReadBuffer[2];
@@ -74,12 +147,12 @@ void UartRead(UartModule *_UartModule, uint8_t *ReadBuffer, struct timeval *Time
                                 uint8_t NewAddress = LastRegisteredAddress++;
                                 UartWrite(_UartModule, SENSOR_ZERO_ADDR, CMD_SET_ID, &NewAddress, 1);
                             } else {
-                                OwnSensors[Address - 1].Address = Address;
-                                OwnSensors[Address - 1].Data = ReadBuffer[3];
-                            };
+                                uint8_t SensorValue = ReadBuffer[3];
+                                UpdateSensor(Address, SensorValue);
+                            }
                             UartWrite(_UartModule, Address, CMD_ACK, NULL, 0);
                             break;
-                    };
+                    }
                 } else {
                     fprintf(stderr, "Checksum error\n");
                 };
@@ -104,6 +177,7 @@ void SyncAndRead(UartModule *_UartModule, uint8_t *ReadBuffer, struct timeval *T
             usleep(SlotTimeUs - ElapsedUs);
         };
     };
+    CheckInactiveSensors(5);
 };
 
 void *SyncClientsHandler(void *Arguments) {
@@ -166,5 +240,4 @@ void *SensorHandler(void *Arguments) {
     };
     return NULL;
 };
-
 

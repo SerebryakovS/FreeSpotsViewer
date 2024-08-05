@@ -1,5 +1,5 @@
 
-// gcc -I/usr/include/modbus -I/usr/include/libmemcached SensorsProto.c ConcentratorsProto.c Main.c Spotrack.h -o out -lwiringPi -pthread -lmodbus -lmemcached
+// gcc -I/usr/include/modbus -I/usr/include/libmemcached SensorsProto.c ConcentratorsProto.c Main.c Spotrack.h -o out -lwiringPi -pthread -lmodbus
 
 #include "Spotrack.h"
 
@@ -7,8 +7,12 @@ pthread_t ThreadA, ThreadB;
 
 void HandleSigint(int Signal) {
     printf("Caught CTRL+C. Closing app..\n");
-    close(_UartModuleA.UartPortFd);
-    close(_UartModuleB.UartPortFd);
+    if (_UartModuleA.UartPortFd != -1) {
+        close(_UartModuleA.UartPortFd);
+    };
+    if (_UartModuleB.UartPortFd != -1) {
+        close(_UartModuleB.UartPortFd);
+    };
     pthread_cancel(ThreadA);
     pthread_cancel(ThreadB);
     digitalWrite(_UartModuleA.EnablePin, LOW);
@@ -46,14 +50,9 @@ uint8_t main(void) {
         _UartModuleB.PortId = 'B';
         _UartModuleB.EnablePin = RS485_CTRL_PIN_B;
         pinMode(_UartModuleB.EnablePin, OUTPUT);
-
         pinMode(RS485_ROLE_PIN_B, INPUT);
         pullUpDnControl(RS485_ROLE_PIN_B, PUD_UP);
-
-
         pinMode(RS485_ROLE_LED_B, OUTPUT);
-
-
         digitalWrite(_UartModuleB.EnablePin, LOW);
         _UartModuleB.UartPortFd = SetupUart(RS485_UART_PORT_B);
         if (_UartModuleA.UartPortFd == -1) {
@@ -62,15 +61,11 @@ uint8_t main(void) {
         };
     };
     signal(SIGINT, HandleSigint);
-    // pthread_create(&ThreadA, NULL, SyncClientsHandler, (void *)&_UartModuleA);
-    // while (1) {
-    //     GetSensorsStatus();
-    // };
-    // pthread_join(ThreadA, NULL);
-    // close(_UartModuleA.UartPortFd);
-
-    pthread_create(&ThreadB, NULL, SyncConcentratorsHandler, (void *)&_UartModuleA);
+    pthread_create(&ThreadA, NULL, SyncClientsHandler, (void *)&_UartModuleA);
+    pthread_create(&ThreadB, NULL, SyncConcentratorsHandler, (void *)&_UartModuleB);
+    pthread_join(ThreadA, NULL);
     pthread_join(ThreadB, NULL);
-
+    close(_UartModuleA.UartPortFd);
+    close(_UartModuleB.UartPortFd);
     return EXIT_SUCCESS;
 };

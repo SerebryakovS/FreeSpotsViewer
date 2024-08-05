@@ -35,14 +35,18 @@ void RunModbusSlave(uint8_t SlaveId, UartModule *_UartModule) {
         return;
     };
     while (!IsMaster()) {
-        digitalWrite(_UartModule->EnablePin, LOW);
         int RequestLength = modbus_receive(ModbusContext, Query);
         if (RequestLength > 0) {
-            for (int Idx = 0; Idx < SENSORS_COUNT; ++Idx) {
-                MbMapping->tab_registers[Idx] = OwnSensors[Idx].Data;
+            SensorData *CurrSensor = SensorsHead;
+            uint8_t Idx = 0;
+            while (CurrSensor != NULL && Idx < SENSORS_COUNT) {
+                MbMapping->tab_registers[Idx] = CurrSensor->Data;
+                CurrSensor = CurrSensor->NextSensor;
+                Idx++;
             };
             digitalWrite(_UartModule->EnablePin, HIGH);
             modbus_reply(ModbusContext, Query, RequestLength, MbMapping);
+            digitalWrite(_UartModule->EnablePin, LOW);
         } else if (RequestLength == -1) {
             break;
         };
@@ -52,12 +56,10 @@ void RunModbusSlave(uint8_t SlaveId, UartModule *_UartModule) {
     modbus_free(ModbusContext);
 };
 
-
 void RunModbusMaster(UartModule *_UartModule) {
     modbus_t *ModbusContext;
     ConcentratorData Slaves[BSLAVES_COUNT] = {0};
     uint16_t TabReg[SENSORS_COUNT];
-
     ModbusContext = modbus_new_rtu(RS485_UART_PORT_B, 9600, 'N', 8, 1);
     if (modbus_connect(ModbusContext) == -1) {
         fprintf(stderr, "Connection failed: %s\n", modbus_strerror(errno));
@@ -65,7 +67,7 @@ void RunModbusMaster(UartModule *_UartModule) {
         return;
     };
     while (IsMaster()) {
-        for (int SlaveId = 1; SlaveId <= BSLAVES_COUNT; ++SlaveId) {
+        for (uint8_t SlaveId = 1; SlaveId <= BSLAVES_COUNT; ++SlaveId) {
             if (modbus_set_slave(ModbusContext, SlaveId) == -1) {
                 fprintf(stderr, "Failed to set slave ID: %s\n", modbus_strerror(errno));
                 continue;
@@ -77,7 +79,7 @@ void RunModbusMaster(UartModule *_UartModule) {
                 fprintf(stderr, "Read failed for slave %d: %s\n", SlaveId, modbus_strerror(errno));
             } else {
                 Slaves[SlaveId - 1].SensorsCount = RequestLength;
-                for (int Idx = 0; Idx < RequestLength; ++Idx) {
+                for (uint8_t Idx = 0; Idx < RequestLength; ++Idx) {
                     Slaves[SlaveId - 1].Sensors[Idx].Address = SENSOR_ZERO_ADDR + Idx;
                     Slaves[SlaveId - 1].Sensors[Idx].Data = TabReg[Idx];
                 };

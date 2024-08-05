@@ -13,9 +13,9 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <signal.h>
+#include <stdbool.h>
 #include <sys/time.h>
 #include <modbus.h>
-#include <memcached.h>
 
 #define SENSORS_COUNT               64
 #define BSLAVES_COUNT               16
@@ -44,13 +44,17 @@ typedef struct UartModule {
 typedef struct SensorData {
     uint8_t  Address;
     uint8_t  Data;
+    uint8_t  InactivityCounter;
+    struct SensorData *NextSensor;
 } SensorData;
+
+extern SensorData *SensorsHead;
 
 SensorData OwnSensors[SENSORS_COUNT];
 
 extern UartModule _UartModuleA, _UartModuleB;
 
-
+void *SyncClientsHandler(void *Arguments);
 void *SyncConcentratorsHandler(void *Arguments);
 
 #endif
