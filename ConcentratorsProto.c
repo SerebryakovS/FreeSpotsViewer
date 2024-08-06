@@ -8,24 +8,25 @@ typedef struct {
     uint8_t SensorsCount;
 } ConcentratorData;
 
-int32_t GetSlaveId(const char *Interface) {
-    int32_t SocketFd;
-    struct ifreq Ifr;
-    unsigned char MacAddress[6];
-    SocketFd = socket(AF_INET, SOCK_DGRAM, 0);
-    if (SocketFd == -1) {
-        return -EXIT_FAILURE;
-    };
-    strncpy(Ifr.ifr_name, Interface, IFNAMSIZ - 1);
-    if (ioctl(SocketFd, SIOCGIFHWADDR, &Ifr) == -1) {
-        close(SocketFd);
-        return -EXIT_FAILURE;
-    };
-    close(SocketFd);
-    memcpy(MacAddress, Ifr.ifr_hwaddr.sa_data, 6);
-    int32_t DeviceId = (MacAddress[2] << 24) | (MacAddress[3] << 16) | (MacAddress[4] << 8) | MacAddress[5];
-    printf("Unique Device ID: %d\n", DeviceId);
-    return DeviceId;
+int32_t GetSlaveId(/*const char *Interface*/) {
+    // int32_t SocketFd;
+    // struct ifreq Ifr;
+    // unsigned char MacAddress[6];
+    // SocketFd = socket(AF_INET, SOCK_DGRAM, 0);
+    // if (SocketFd == -1) {
+    //     return -EXIT_FAILURE;
+    // };
+    // strncpy(Ifr.ifr_name, Interface, IFNAMSIZ - 1);
+    // if (ioctl(SocketFd, SIOCGIFHWADDR, &Ifr) == -1) {
+    //     close(SocketFd);
+    //     return -EXIT_FAILURE;
+    // };
+    // close(SocketFd);
+    // memcpy(MacAddress, Ifr.ifr_hwaddr.sa_data, 6);
+    // int32_t DeviceId = (MacAddress[2] << 24) | (MacAddress[3] << 16) | (MacAddress[4] << 8) | MacAddress[5];
+    // printf("Unique Device ID: %d\n", DeviceId);
+    // return DeviceId;
+    return 0x03;
 };
 
 bool IsMaster() {
@@ -138,7 +139,7 @@ void *SyncConcentratorsHandler(void *Arguments) {
             RunModbusMaster(_UartModule);
         } else {
             digitalWrite(RS485_ROLE_LED_B, LOW);
-            RunModbusSlave(GetSlaveId(CONC_INET_IFACE), _UartModule);
+            RunModbusSlave(GetSlaveId(/*CONC_INET_IFACE*/), _UartModule);
         };
     };
 };
