@@ -38,7 +38,6 @@
 #define RS485_ROLE_LED_B            14
 #define RS485_ROLE_PIN_B            10
 
-
 typedef struct UartModule {
     char     PortId;
     uint16_t UartPortFd;

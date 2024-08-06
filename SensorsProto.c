@@ -192,16 +192,6 @@ void *SyncClientsHandler(void *Arguments) {
     return NULL;
 };
 
-void GetSensorsStatus( void ) {
-    uint8_t freeSpotsCount = 0;
-    for (int Idx = 0; Idx < SENSORS_COUNT; ++Idx) {
-        if (OwnSensors[Idx].Data == 1) {
-            freeSpotsCount++;
-        };
-    };
-    printf("Busy Spots Count: %d\n", freeSpotsCount);
-};
-
 void *SensorHandler(void *Arguments) {
     UartModule *SensorUart = (UartModule *)Arguments;
     uint8_t ReadBuffer[10];
