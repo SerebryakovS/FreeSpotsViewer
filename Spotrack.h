@@ -16,6 +16,9 @@
 #include <stdbool.h>
 #include <sys/time.h>
 #include <modbus.h>
+#include <sys/ioctl.h>
+#include <net/if.h>
+#include <arpa/inet.h>
 
 #define SENSORS_COUNT               64
 #define BSLAVES_COUNT               16
@@ -29,6 +32,7 @@
 #define CMD_SET_ID                0x01
 #define RS485_UART_PORT_A "/dev/ttyS1"
 #define RS485_UART_PORT_B "/dev/ttyS2"
+#define CONC_INET_IFACE         "eth0"
 #define RS485_CTRL_PIN_A             4
 #define RS485_CTRL_PIN_B             5
 #define RS485_ROLE_LED_B            14

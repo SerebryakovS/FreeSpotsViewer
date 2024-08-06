@@ -61,9 +61,9 @@ uint8_t main(void) {
         };
     };
     signal(SIGINT, HandleSigint);
-    pthread_create(&ThreadA, NULL, SyncClientsHandler, (void *)&_UartModuleA);
+    // pthread_create(&ThreadA, NULL, SyncClientsHandler, (void *)&_UartModuleA);
     pthread_create(&ThreadB, NULL, SyncConcentratorsHandler, (void *)&_UartModuleB);
-    pthread_join(ThreadA, NULL);
+    // pthread_join(ThreadA, NULL);
     pthread_join(ThreadB, NULL);
     close(_UartModuleA.UartPortFd);
     close(_UartModuleB.UartPortFd);
