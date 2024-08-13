@@ -1,7 +1,8 @@
 
-// gcc -I/usr/include/modbus -I/usr/include/libmemcached SensorsProto.c ConcentratorsProto.c Main.c Spotrack.h -o out -lwiringPi -pthread -lmodbus
+// gcc -I/usr/include/modbus SensorsProto.c ConcentratorsProto.c Main.c Spotrack.h -o out -lwiringPi -pthread -lmodbus
+// scp *.c *.h root@10.66.100.222:/root/FreeSpotsViewer
 
-#include "Spotrack.h"
+#include "spotrack.h"
 
 pthread_t ThreadA, ThreadB;
 
@@ -21,7 +22,7 @@ void HandleSigint(int Signal) {
 };
 
 uint16_t SetupUart(const char *UartPort) {
-    uint16_t UartPortFd = open(UartPort, O_RDWR | O_NOCTTY | O_NONBLOCK);
+    int16_t UartPortFd = open(UartPort, O_RDWR | O_NOCTTY | O_NONBLOCK);
     if (UartPortFd == -1) {
         perror("Unable to open UART port");
         return -EXIT_FAILURE;
@@ -37,7 +38,7 @@ uint16_t SetupUart(const char *UartPort) {
     return UartPortFd;
 };
 
-uint8_t main(void) {
+int32_t main(void) {
     wiringPiSetup();
     _UartModuleA.PortId = 'A';
     _UartModuleA.EnablePin = RS485_CTRL_PIN_A;
@@ -61,6 +62,9 @@ uint8_t main(void) {
         };
     };
     signal(SIGINT, HandleSigint);
+#ifdef TEST_MODE
+    SimulateSensorData();
+#endif
     // pthread_create(&ThreadA, NULL, SyncClientsHandler, (void *)&_UartModuleA);
     pthread_create(&ThreadB, NULL, SyncConcentratorsHandler, (void *)&_UartModuleB);
     // pthread_join(ThreadA, NULL);

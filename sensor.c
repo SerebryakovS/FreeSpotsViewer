@@ -1,5 +1,5 @@
 
-#include "Spotrack.h"
+#include "spotrack.h"
 
 UartModule _UartModuleA = {0};
 
@@ -9,6 +9,14 @@ const uint32_t SlotTimeUs = SYNC_INTERVAL / SENSORS_COUNT;
 
 uint8_t LastRegisteredAddress = 0x01;
 
+void BinaryToHex(const uint8_t *BinaryPacket, size_t BinaryPacketLength, char *HexStringOutput) {
+    const char HexChars[] = "0123456789ABCDEF";
+    for (size_t Idx = 0; Idx < BinaryPacketLength; ++Idx) {
+        HexStringOutput[Idx * 2] = HexChars[(BinaryPacket[Idx] >> 4) & 0x0F];
+        HexStringOutput[Idx * 2 + 1] = HexChars[BinaryPacket[Idx] & 0x0F];
+    };
+    HexStringOutput[BinaryPacketLength * 2] = '\0';
+};
 
 //////////////////////////////////////////////////////////////////////////////////
 
@@ -77,16 +85,31 @@ void CheckInactiveSensors(uint8_t MaxInactivity) {
     };
 };
 
-//////////////////////////////////////////////////////////////////////////////////
-
-void BinaryToHex(const uint8_t *bin, size_t bin_len, char *hex) {
-    const char hex_chars[] = "0123456789ABCDEF";
-    for (size_t i = 0; i < bin_len; ++i) {
-        hex[i * 2] = hex_chars[(bin[i] >> 4) & 0x0F];
-        hex[i * 2 + 1] = hex_chars[bin[i] & 0x0F];
+uint8_t CalculateFreeSpaces() {
+    uint8_t FreeSpaces = 0;
+    SensorData *CurrSensor = SensorsHead;
+    while (CurrSensor != NULL) {
+        if (CurrSensor->Data == 0) {
+            FreeSpaces++;
+        };
+        CurrSensor = CurrSensor->NextSensor;
     };
-    hex[bin_len * 2] = '\0';
+    return FreeSpaces;
 };
+
+#ifdef TEST_MODE
+void SimulateSensorData() {
+    for (uint8_t Idx = 0; Idx < SENSORS_COUNT; ++Idx) {
+        if (rand() % 2) {
+            UpdateSensor(Idx + 1, rand() % 100);
+        } else {
+            RemoveSensor(Idx + 1);
+        };
+    };
+};
+#endif
+
+//////////////////////////////////////////////////////////////////////////////////
 
 static inline uint8_t CalculateChecksum(const uint8_t *Data, size_t Length) {
     uint8_t Checksum = 0;
@@ -149,8 +172,14 @@ void UartRead(UartModule *_UartModule, uint8_t *ReadBuffer, struct timeval *Time
                             } else {
                                 uint8_t SensorValue = ReadBuffer[3];
                                 UpdateSensor(Address, SensorValue);
-                            }
+                            };
                             UartWrite(_UartModule, Address, CMD_ACK, NULL, 0);
+                            break;
+                        case CMD_DISP:
+                            if (Address == DISPLAY_ADDR) {
+                                uint8_t FreeSpaces = CalculateFreeSpaces();
+                                UartWrite(_UartModule, DISPLAY_ADDR, CMD_DISP, &FreeSpaces, 1);
+                            };
                             break;
                     }
                 } else {
@@ -230,4 +259,5 @@ void *SensorHandler(void *Arguments) {
     };
     return NULL;
 };
+
 
