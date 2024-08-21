@@ -1,7 +1,4 @@
 
-// gcc -I/usr/include/modbus SensorsProto.c ConcentratorsProto.c Main.c Spotrack.h -o out -lwiringPi -pthread -lmodbus
-// scp *.c *.h root@10.66.100.222:/root/FreeSpotsViewer
-
 #include "spotrack.h"
 
 pthread_t ThreadA, ThreadB;
@@ -21,7 +18,7 @@ void HandleSigint(int Signal) {
     exit(EXIT_SUCCESS);
 };
 
-uint16_t SetupUart(const char *UartPort) {
+uint16_t SetupUart(const char *UartPort, speed_t BaudSpeed) {
     int16_t UartPortFd = open(UartPort, O_RDWR | O_NOCTTY | O_NONBLOCK);
     if (UartPortFd == -1) {
         perror("Unable to open UART port");
@@ -29,7 +26,7 @@ uint16_t SetupUart(const char *UartPort) {
     };
     struct termios UartOptions;
     tcgetattr(UartPortFd, &UartOptions);
-    UartOptions.c_cflag = B9600 | CS8 | CLOCAL | CREAD;
+    UartOptions.c_cflag = BaudSpeed | CS8 | CLOCAL | CREAD;
     UartOptions.c_iflag = IGNPAR;
     UartOptions.c_oflag = 0;
     UartOptions.c_lflag = 0;
@@ -38,13 +35,23 @@ uint16_t SetupUart(const char *UartPort) {
     return UartPortFd;
 };
 
+#ifdef TEST_MODE
+void SimulateSensorData() {
+    for (uint8_t Idx = 0; Idx < SENSORS_COUNT; ++Idx) {
+        uint8_t sensorValue = rand() % 2;
+        UpdateSensor(Idx, sensorValue);
+    };
+    StoreSensorDataInMemcached(GetSlaveId(), SensorsHead);
+};
+#endif
+
 int32_t main(void) {
     wiringPiSetup();
     _UartModuleA.PortId = 'A';
     _UartModuleA.EnablePin = RS485_CTRL_PIN_A;
     pinMode(_UartModuleA.EnablePin, OUTPUT);
     digitalWrite(_UartModuleA.EnablePin, LOW);
-    _UartModuleA.UartPortFd = SetupUart(RS485_UART_PORT_A);
+    _UartModuleA.UartPortFd = SetupUart(RS485_UART_PORT_A, B19200);
     if (_UartModuleA.UartPortFd == -1) {
         return -EXIT_FAILURE;
     } else {
@@ -55,19 +62,20 @@ int32_t main(void) {
         pullUpDnControl(RS485_ROLE_PIN_B, PUD_UP);
         pinMode(RS485_ROLE_LED_B, OUTPUT);
         digitalWrite(_UartModuleB.EnablePin, LOW);
-        _UartModuleB.UartPortFd = SetupUart(RS485_UART_PORT_B);
+        _UartModuleB.UartPortFd = SetupUart(RS485_UART_PORT_B, B9600);
         if (_UartModuleA.UartPortFd == -1) {
             close(_UartModuleA.UartPortFd);
             return -EXIT_FAILURE;
         };
     };
     signal(SIGINT, HandleSigint);
+
 #ifdef TEST_MODE
     SimulateSensorData();
 #endif
-    // pthread_create(&ThreadA, NULL, SyncClientsHandler, (void *)&_UartModuleA);
+    pthread_create(&ThreadA, NULL, SyncClientsHandler, (void *)&_UartModuleA);
     pthread_create(&ThreadB, NULL, SyncConcentratorsHandler, (void *)&_UartModuleB);
-    // pthread_join(ThreadA, NULL);
+    pthread_join(ThreadA, NULL);
     pthread_join(ThreadB, NULL);
     close(_UartModuleA.UartPortFd);
     close(_UartModuleB.UartPortFd);

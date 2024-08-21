@@ -3,10 +3,6 @@
 
 UartModule _UartModuleB = {0};
 
-int32_t GetSlaveId() {
-    return 0x01;
-}
-
 void *SyncConcentratorsHandler(void *Arguments) {
     UartModule *_UartModule = (UartModule *)Arguments;
     while (1) {
@@ -15,7 +11,7 @@ void *SyncConcentratorsHandler(void *Arguments) {
             RunModbusMaster(_UartModule);
         } else {
             digitalWrite(RS485_ROLE_LED_B, LOW);
-            RunModbusSlave(GetSlaveId(/*CONC_INET_IFACE*/), _UartModule);
+            RunModbusSlave(_UartModule);
         };
     };
 };

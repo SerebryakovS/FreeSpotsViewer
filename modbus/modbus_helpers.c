@@ -1,6 +1,10 @@
  
 #include "modbus.h"
 
+int32_t GetSlaveId() {
+    return 0x01;
+};
+
 void PrettyPrintModbusMessage(uint8_t *ModbusMessage, int Length, const char *MessageType) {
     printf("%s Message:\n", MessageType);
     printf("Raw Bytes: ");
@@ -44,8 +48,7 @@ uint16_t CalculateCRC(uint8_t *IncomingData, int Length) {
     return CRC;
 };
 
-uint8_t SendModbusRequest(UartModule *_UartModule, modbus_t *ModbusContext, uint8_t SlaveId, uint8_t Function, uint8_t Address, uint8_t DataCount, uint8_t *RequestBody) {
-    uint8_t ModbusRequest[MODBUS_RTU_MAX_ADU_LENGTH];
+uint8_t SendModbusRequest(UartModule *_UartModule, modbus_t *ModbusContext, uint8_t SlaveId, uint8_t Function, uint8_t Address, uint8_t DataCount, uint8_t *ModbusRequest) {
     ModbusRequest[0] = SlaveId;
     ModbusRequest[1] = Function;
     ModbusRequest[2] = (Address >> 8) & 0xFF;
@@ -53,9 +56,6 @@ uint8_t SendModbusRequest(UartModule *_UartModule, modbus_t *ModbusContext, uint
     ModbusRequest[4] = (DataCount >> 8) & 0xFF;
     ModbusRequest[5] = DataCount & 0xFF;
     int RequestLength = 6;
-    for (int Idx = 0; Idx < DataCount; Idx++) {
-        ModbusRequest[RequestLength++] = RequestBody[Idx];
-    };
     uint16_t CRC = CalculateCRC(ModbusRequest, RequestLength);
     ModbusRequest[RequestLength++] = CRC & 0xFF;
     ModbusRequest[RequestLength++] = (CRC >> 8) & 0xFF;
