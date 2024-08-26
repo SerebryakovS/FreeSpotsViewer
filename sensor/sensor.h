@@ -5,16 +5,15 @@
 #include "config.h"
 #include "memcached.h"
 
-#define SENSOR_ZERO_ADDR             2
+#define SENSOR_ZERO_ADDR             1
 #define DISPLAY_ADDR   SENSORS_COUNT-1
 #define SYNC_INTERVAL        1000000UL
-#define MSG_START                 0x02
-#define MSG_END                   0x03
-#define CMD_SYNC                  0x03
-#define CMD_DATA                  0x82
-#define CMD_DISP                  0x83
-#define CMD_ACK                   0x04
-#define CMD_SET_ID                0x01
+#define MSG_START				  0xA0
+#define MSG_END				      0xAF
+#define CMD_SYNC				  0x91
+#define CMD_DATA				  0x92
+#define CMD_DISP				  0x93
+#define CMD_SET_ID			      0x94
 
 static const uint32_t SlotTimeUs = SYNC_INTERVAL / SENSORS_COUNT;
 

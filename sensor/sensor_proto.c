@@ -1,7 +1,7 @@
 
 #include "sensor.h"
 
-static uint8_t LastRegisteredAddress = SENSOR_ZERO_ADDR;
+static uint8_t LADDR = SENSOR_ZERO_ADDR + 1;
 
 static inline uint8_t CalculateChecksum(const uint8_t *Data, size_t Length) {
     uint8_t Checksum = 0;
@@ -87,18 +87,18 @@ void ReadFromSensor(UartModule *_UartModule, uint8_t *ReadBuffer, struct timeval
 };
 
 void SyncAndRead(UartModule *_UartModule, uint8_t *ReadBuffer, struct timeval *Timeout) {
-    const uint8_t Data[] = {0}; // No additional data for SYNC
-    SendToSensor(_UartModule, 0xFF, CMD_SYNC, Data, 0);
+    const uint8_t Data[] = {LADDR};	
+    SendToSensor(_UartModule, 0xFF, CMD_SYNC, Data, 1);
     for (int SlotIdx = 0; SlotIdx < SENSORS_COUNT; ++SlotIdx) {
 		ReadFromSensor(_UartModule, ReadBuffer, Timeout, SlotIdx);
     };	
     CheckInactiveSensors(5);
 };
 
-void SensorsProtoHandler(UartModule *_UartModule, uint8_t SlotIdx, uint8_t *ReadBuffer, int16_t ReadCountBytes){
+void SensorsProtoHandler(UartModule *_UartModule, uint8_t SlotIdx, uint8_t *ReadBuffer, int16_t ReadCountBytes) {
     if (ReadBuffer[0] == MSG_START && ReadBuffer[ReadCountBytes - 1] == MSG_END) {
         uint8_t Address = ReadBuffer[1];
-		if (Address != SlotIdx){
+		if (Address != SlotIdx) {
 			fprintf(stderr, "SlotIdx and DeviceId mismatch\n");
 			tcflush(_UartModule->UartPortFd, TCIFLUSH);
 			return;
@@ -109,18 +109,12 @@ void SensorsProtoHandler(UartModule *_UartModule, uint8_t SlotIdx, uint8_t *Read
         if (Checksum == CalculatedChecksum) {
             switch (Command) {
                 case CMD_DATA:
-                    if (Address == SENSOR_ZERO_ADDR) {
-                        uint8_t NewAddress = LastRegisteredAddress + 1;
-                        SendToSensor(_UartModule, Address, CMD_SET_ID, &NewAddress, 1);
+                    if (Address == LADDR) {
+                        LADDR++;
 						break;
-                    } else {
-						if (Address == LastRegisteredAddress + 1){
-							LastRegisteredAddress++;
-						};
-                        uint8_t SensorValue = ReadBuffer[3];
-                        UpdateSensor(Address, SensorValue);
                     };
-					//SendToSensor(_UartModule, Address, CMD_ACK, NULL, 0);
+					uint8_t SensorValue = ReadBuffer[3];
+                    UpdateSensor(Address, SensorValue);
                     break;
 				default:
 					break;

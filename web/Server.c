@@ -199,8 +199,8 @@ static int HandlePostRequest(const struct MHD_Connection *Connection, const char
     return ReturnValue;
 }
 //
-static void RequestCompleted(void *Cls, struct MHD_Connection *Connection,
-                              void **ConCls, enum MHD_RequestTerminationCode Toe){
+static void OnRequestCompleted(void *Cls, struct MHD_Connection *Connection,
+							   void **ConCls, enum MHD_RequestTerminationCode Toe){
     struct PostRequest *_PostRequest = *ConCls;
     if (_PostRequest != NULL) {
         if (_PostRequest->Data != NULL){
@@ -211,10 +211,10 @@ static void RequestCompleted(void *Cls, struct MHD_Connection *Connection,
     *ConCls = NULL;
 };
 //
-static int AnswerToWebRequest(void *cls, struct MHD_Connection *Connection,
-                              const char *Url, const char *Method,
-                              const char *Version, const char *UploadData,
-                              size_t *UploadDataSize, void **ConCls) {
+static int WebRequestHandler(void *cls, struct MHD_Connection *Connection,
+							 const char *Url, const char *Method,
+							 const char *Version, const char *UploadData,
+							 size_t *UploadDataSize, void **ConCls) {
     if (strcmp(Method, "POST") == 0) {
         if (*ConCls == NULL) {
             struct PostRequest *_PostRequest = malloc(sizeof(struct PostRequest));
@@ -247,13 +247,12 @@ static int AnswerToWebRequest(void *cls, struct MHD_Connection *Connection,
 //
 int RunWebServer(){
         struct MHD_Daemon *Daemon = MHD_start_daemon(MHD_USE_INTERNAL_POLLING_THREAD, REST_PORT,
-                                                     NULL, NULL, &AnswerToWebRequest, NULL,
-                                                     MHD_OPTION_NOTIFY_COMPLETED, RequestCompleted, NULL,
+                                                     NULL, NULL, &WebRequestHandler, NULL,
+                                                     MHD_OPTION_NOTIFY_COMPLETED, OnRequestCompleted, NULL,
                                                      MHD_OPTION_END);
         if (NULL == Daemon){ 
             return -EXIT_FAILURE;
         };
         printf("[%s]: Server is running on port: %d\n", PRINT_TAG, REST_PORT);
-        RunRs485Controller(WEB_MODE);
         MHD_stop_daemon(Daemon);
 };

@@ -13,7 +13,7 @@ void RunModbusSlave(UartModule *_UartModule) {
     if (ModbusContext == NULL) {
         return;
     };
-    modbus_set_debug(ModbusContext, TRUE);
+    //modbus_set_debug(ModbusContext, TRUE);
     if (modbus_set_slave(ModbusContext, SlaveId) == -1) {
         modbus_free(ModbusContext);
         return;
@@ -33,6 +33,7 @@ void RunModbusSlave(UartModule *_UartModule) {
         modbus_free(ModbusContext);
         return;
     };
+	uint8_t SensorAvailable[SENSORS_COUNT] = {0};
     printf("Running as Modbus Slave with ID %d...\n", SlaveId);
     digitalWrite(_UartModule->EnablePin, LOW);
     while (!IsMaster()) {
@@ -52,16 +53,18 @@ void RunModbusSlave(UartModule *_UartModule) {
                 if ((start_address + quantity) > 0x0100 || quantity > 64) {
                     continue;
                 };
+				memset(MbMapping->tab_registers, 0xFF, SENSORS_COUNT * sizeof(uint16_t));
+                memset(SensorAvailable, 0, SENSORS_COUNT);
                 SensorData *CurrSensor = ExtractSensorDataFromMemcached(SlaveId, SENSORS_COUNT);
                 uint8_t Idx = 0;
-                while (CurrSensor != NULL && Idx < SENSORS_COUNT) {
+                while (CurrSensor != NULL) {
                     MbMapping->tab_registers[CurrSensor->Address] = CurrSensor->Data;
+                    SensorAvailable[CurrSensor->Address] = 1;
                     CurrSensor = CurrSensor->NextSensor;
-                    Idx++;
                 };
-                if (Idx == 0){
-                    for (uint8_t Idx = 0; Idx < SENSORS_COUNT; Idx++){
-                        MbMapping->tab_registers[Idx] = 0;
+                for (uint8_t Idx = 0; Idx < SENSORS_COUNT; Idx++) {
+                    if (!SensorAvailable[Idx]) {
+                        MbMapping->tab_registers[Idx] = 0xFF;
                     };
                 };
                 digitalWrite(_UartModule->EnablePin, HIGH);

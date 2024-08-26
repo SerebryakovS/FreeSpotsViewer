@@ -1,4 +1,4 @@
- 
+
 #include "modbus.h"
 
 void RunModbusMaster(UartModule *_UartModule) {
@@ -36,13 +36,28 @@ void RunModbusMaster(UartModule *_UartModule) {
             if (ReadCountBytes > 0) {
                 uint8_t ByteCount = ModbusResponse[2];
                 SensorData *IncomingData = malloc(sizeof(SensorData) * SENSORS_COUNT);
-                for (uint8_t Idx = 0; Idx < 64 && Idx * 2 < ByteCount; ++Idx) {
-                    IncomingData[Idx].Address = Idx;
-                    IncomingData[Idx].Data = (ModbusResponse[3 + Idx * 2] << 8) | ModbusResponse[4 + Idx * 2];
-                    IncomingData[Idx].InactivityCounter = 0;
-                    IncomingData[Idx].NextSensor = (Idx < SENSORS_COUNT - 1) ? &IncomingData[Idx + 1] : NULL;
+                SensorData *CurrSensor = IncomingData;
+                uint8_t ValidSensorCount = 0;
+                printf("ConcentratorId: %d, Sensors: ", SlaveId);
+                for (uint8_t Idx = 0; Idx < SENSORS_COUNT && Idx * 2 < ByteCount; ++Idx) {
+                    uint8_t SensorValue = ModbusResponse[4 + Idx * 2];
+                    if (SensorValue != 0xFF) {
+                        CurrSensor->Address = Idx;
+                        CurrSensor->Data = SensorValue;
+                        CurrSensor->InactivityCounter = 0;
+                        CurrSensor->NextSensor = NULL;
+                        if (ValidSensorCount > 0) {
+                            (CurrSensor - 1)->NextSensor = CurrSensor;
+                        };
+                        printf("[%d: %d] ", CurrSensor->Address, CurrSensor->Data);
+                        CurrSensor++;
+                        ValidSensorCount++;
+                    };
                 };
-                StoreSensorDataInMemcached(SlaveId, IncomingData);
+                printf("\n");
+                if (ValidSensorCount > 0) {
+                    StoreSensorDataInMemcached(SlaveId, IncomingData);
+                };
                 free(IncomingData);
             };
         };
