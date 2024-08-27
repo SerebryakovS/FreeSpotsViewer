@@ -19,7 +19,7 @@ static const uint32_t SlotTimeUs = SYNC_INTERVAL / SENSORS_COUNT;
 
 extern SensorData *SensorsHead;
 
-uint8_t CalculateFreeSensors();
+uint8_t CalculateFreeSensors( void );
 void AddSensor(uint8_t SensorAddress, int8_t SensorValue);
 void RemoveSensor(uint8_t SensorAddress);
 void UpdateSensor(uint8_t SensorAddress, int8_t SensorValue);

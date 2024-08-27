@@ -1,13 +1,18 @@
 CC = gcc 
-CFLAGS = -I/usr/include/modbus -I./modbus -I./config -I./sensor -I./memcached -lwiringPi -pthread -lmodbus -lmemcached -Wall -Wextra -O2
+CFLAGS = -I/usr/include/modbus -I./modbus -I./config -I./sensor -I./memcached -I./web -lwiringPi -pthread -lmodbus -lmemcached -lmicrohttpd -Wall -Wextra -O2
 
 SRC_DIR = .
 SRC_FILES = $(SRC_DIR)/main.c $(SRC_DIR)/sensor.c $(SRC_DIR)/concentrator.c
 MODBUS_SRC_FILES = modbus/modbus_master.c modbus/modbus_slave.c modbus/modbus_helpers.c
-SENSOR_SRC_FILES = sensor/sensor_buffer.c sensor/sensor_proto.c  # Updated the filename
+SENSOR_SRC_FILES = sensor/sensor_buffer.c sensor/sensor_proto.c
 MEMCACHED_SRC_FILES = memcached/memcached.c
+WEB_SRC_FILES = web/web_server.c web/web_handlers.c 
 
-OBJ_FILES = $(SRC_FILES:.c=.o) $(MODBUS_SRC_FILES:.c=.o) $(SENSOR_SRC_FILES:.c=.o) $(MEMCACHED_SRC_FILES:.c=.o)
+OBJ_FILES = $(SRC_FILES:.c=.o) \
+			$(MODBUS_SRC_FILES:.c=.o) \
+			$(SENSOR_SRC_FILES:.c=.o) \
+			$(MEMCACHED_SRC_FILES:.c=.o) \
+			$(WEB_SRC_FILES:.c=.o)
 
 TARGET = FreeSpotsViewer
 
