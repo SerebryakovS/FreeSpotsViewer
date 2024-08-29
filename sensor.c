@@ -12,6 +12,7 @@ void *SyncClientsHandler(void *Arguments) {
     while (1) {
         SyncAndRead(_UartModule, ReadBuffer, &Timeout);
         StoreSensorDataInMemcached(GetSlaveId(), SensorsHead);
+		ExtractSensorDataFromMemcached(1,64);
     };
     return NULL;
 };

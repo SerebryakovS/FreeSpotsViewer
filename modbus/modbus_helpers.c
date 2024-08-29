@@ -1,8 +1,16 @@
  
 #include "modbus.h"
 
+bool IsMaster() {
+    return digitalRead(RS485_ROLE_PIN_B) == 0;
+};
+
 int32_t GetSlaveId() {
-    return 0x01;
+	if (IsMaster()){
+		return 0x00;
+	};
+    // return 0x01;
+	
 };
 
 void PrettyPrintModbusMessage(uint8_t *ModbusMessage, int Length, const char *MessageType) {
@@ -68,8 +76,4 @@ uint8_t SendModbusRequest(UartModule *_UartModule, modbus_t *ModbusContext, uint
         return 0;
     };
     return 1;
-};
-
-bool IsMaster() {
-    return digitalRead(RS485_ROLE_PIN_B) == 0;
 };

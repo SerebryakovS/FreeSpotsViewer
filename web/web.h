@@ -3,14 +3,9 @@
 #define SENSOR_H
 
 #include <stdio.h>
-#include <unistd.h>
 #include <stdbool.h>
-#include <fcntl.h>
-#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
-#include <pthread.h>
 #include <microhttpd.h>
 
 #define WEB_RESPONSE_SIZE  4096
@@ -27,5 +22,7 @@ const char *SetSlaveAlias(const char *SlaveId, const char *SlaveAlias);
 const char *SetZoneAlias(const char *ZoneAlias);
 
 int32_t RunWebServer( void );
+void StopWebServer(void);
+bool IsWebServerRunning(void);
 
 #endif

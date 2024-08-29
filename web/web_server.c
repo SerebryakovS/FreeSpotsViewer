@@ -129,14 +129,32 @@ static int WebRequestsHandler(void *cls, struct MHD_Connection *Connection,
     return MHD_NO;
 };
 
+static struct MHD_Daemon *Daemon = NULL;
+static bool WebServerRunFlag = false;
+
 int32_t RunWebServer() {
-    struct MHD_Daemon *Daemon = MHD_start_daemon(MHD_USE_THREAD_PER_CONNECTION, REST_PORT,
-                                                 NULL, NULL, &WebRequestsHandler, NULL,
-                                                 MHD_OPTION_NOTIFY_COMPLETED, OnRequestCompleted, NULL,
-                                                 MHD_OPTION_END);
-    if (NULL == Daemon) {
-        return -EXIT_FAILURE;
+    if (!WebServerRunFlag) {
+        Daemon = MHD_start_daemon(MHD_USE_THREAD_PER_CONNECTION, REST_PORT,
+                                  NULL, NULL, &WebRequestsHandler, NULL,
+                                  MHD_OPTION_NOTIFY_COMPLETED, OnRequestCompleted, NULL,
+                                  MHD_OPTION_END);
+        if (Daemon != NULL) {
+            WebServerRunFlag = true;
+            printf("WebServer started on port: %d\n", REST_PORT);
+        } else {
+            fprintf(stderr, "Failed to start WebServer\n");
+        };
     };
-    printf("WebServer is running on port: %d\n", REST_PORT);
-    MHD_stop_daemon(Daemon);
+};
+
+void StopWebServer(void) {
+    if (WebServerRunFlag && Daemon != NULL) {
+        MHD_stop_daemon(Daemon);
+        WebServerRunFlag = false;
+        printf("WebServer stopped.\n");
+    };
+};
+
+bool IsWebServerRunning(void) {
+    return WebServerRunFlag;
 };
