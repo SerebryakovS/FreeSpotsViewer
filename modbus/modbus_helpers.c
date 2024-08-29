@@ -8,9 +8,9 @@ bool IsMaster() {
 int32_t GetSlaveId() {
 	if (IsMaster()){
 		return 0x00;
+	} else {
+		return 0x01;
 	};
-    // return 0x01;
-	
 };
 
 void PrettyPrintModbusMessage(uint8_t *ModbusMessage, int Length, const char *MessageType) {

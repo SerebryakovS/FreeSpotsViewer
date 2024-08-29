@@ -44,6 +44,7 @@ void UpdateSensor(uint8_t SensorAddress, int8_t SensorValue) {
     while (CurrSensor != NULL) {
         if (CurrSensor->Address == SensorAddress) {
             CurrSensor->Data = SensorValue;
+			CurrSensor->Timestamp = (uint32_t)time(NULL);
             CurrSensor->InactivityCounter = 0;
             return;
         };

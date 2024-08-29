@@ -44,6 +44,7 @@ void RunModbusMaster(UartModule *_UartModule) {
                         CurrSensor->Address = Idx;
                         CurrSensor->Data = SensorValue;
                         CurrSensor->InactivityCounter = 0;
+						CurrSensor->Timestamp = (uint32_t)time(NULL);
                         CurrSensor->NextSensor = NULL;
                         if (ValidSensorCount > 0) {
                             (CurrSensor - 1)->NextSensor = CurrSensor;
@@ -52,9 +53,10 @@ void RunModbusMaster(UartModule *_UartModule) {
                         ValidSensorCount++;
                     };
                 };
-                if (ValidSensorCount > 0) {
-                    StoreSensorDataInMemcached(SlaveId, IncomingData);
-                };
+                if (ValidSensorCount <= 0) {
+					IncomingData = NULL;
+				};
+				StoreSensorDataInMemcached(SlaveId, IncomingData);
                 free(IncomingData);
             };
         };
