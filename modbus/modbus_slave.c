@@ -55,7 +55,7 @@ void RunModbusSlave(UartModule *_UartModule) {
                 };
 				memset(MbMapping->tab_registers, 0xFF, SENSORS_COUNT * sizeof(uint16_t));
                 memset(SensorAvailable, 0, SENSORS_COUNT);
-                SensorData *CurrSensor = ExtractSensorDataFromMemcached(SlaveId, SENSORS_COUNT);
+                SensorData *CurrSensor = ExtractSensorDataFromMemcached(SlaveId);
                 uint8_t Idx = 0;
                 while (CurrSensor != NULL) {
                     MbMapping->tab_registers[CurrSensor->Address] = CurrSensor->Data;
