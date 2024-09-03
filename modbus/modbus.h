@@ -14,6 +14,6 @@ void PrettyPrintModbusMessage(uint8_t *ModbusMessage, int Length, const char *Me
 uint8_t SendModbusRequest(UartModule *_UartModule, modbus_t *ModbusContext, uint8_t SlaveId,
                           uint8_t Function, uint8_t Address, uint8_t DataCount, uint8_t *RequestBody);
 
-int32_t GetSlaveId();
+uint16_t GetSlaveId();
 bool IsMaster();
 #endif

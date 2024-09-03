@@ -30,5 +30,5 @@ extern UartModule _UartModuleA, _UartModuleB;
 
 void *SyncClientsHandler(void *Arguments);
 void *SyncConcentratorsHandler(void *Arguments);
-extern uint8_t CalculateFreeSpaces();
+
 #endif

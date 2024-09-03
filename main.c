@@ -15,6 +15,7 @@ void HandleSigint(int Signal) {
     pthread_cancel(ThreadB);
     digitalWrite(_UartModuleA.EnablePin, LOW);
     digitalWrite(_UartModuleB.EnablePin, LOW);
+	digitalWrite(RS485_ROLE_LED_B, LOW);
     exit(EXIT_SUCCESS);
 };
 
@@ -47,6 +48,11 @@ void SimulateSensorData() {
 
 int32_t main(void) {
     wiringPiSetup();
+	pinMode(RS485_ADDR_PIN_B_1, INPUT); pullUpDnControl(RS485_ADDR_PIN_B_1, PUD_UP);
+	pinMode(RS485_ADDR_PIN_B_2, INPUT); pullUpDnControl(RS485_ADDR_PIN_B_2, PUD_UP);
+	pinMode(RS485_ADDR_PIN_B_3, INPUT); pullUpDnControl(RS485_ADDR_PIN_B_3, PUD_UP);
+	pinMode(RS485_ADDR_PIN_B_4, INPUT); pullUpDnControl(RS485_ADDR_PIN_B_4, PUD_UP);
+	pinMode(RS485_ADDR_PIN_B_5, INPUT); pullUpDnControl(RS485_ADDR_PIN_B_5, PUD_UP);	
     _UartModuleA.PortId = 'A';
     _UartModuleA.EnablePin = RS485_CTRL_PIN_A;
     pinMode(_UartModuleA.EnablePin, OUTPUT);
@@ -58,8 +64,6 @@ int32_t main(void) {
         _UartModuleB.PortId = 'B';
         _UartModuleB.EnablePin = RS485_CTRL_PIN_B;
         pinMode(_UartModuleB.EnablePin, OUTPUT);
-        pinMode(RS485_ROLE_PIN_B, INPUT);
-        pullUpDnControl(RS485_ROLE_PIN_B, PUD_UP);
         pinMode(RS485_ROLE_LED_B, OUTPUT);
         digitalWrite(_UartModuleB.EnablePin, LOW);
         _UartModuleB.UartPortFd = SetupUart(RS485_UART_PORT_B, B9600);

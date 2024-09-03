@@ -1,16 +1,22 @@
  
 #include "modbus.h"
 
-bool IsMaster() {
-    return digitalRead(RS485_ROLE_PIN_B) == 0;
+uint16_t GetSlaveId() {
+	uint16_t Id = 0x00;
+	Id |= (digitalRead(RS485_ADDR_PIN_B_1) ^ 0x01) << 0;
+	Id |= (digitalRead(RS485_ADDR_PIN_B_2) ^ 0x01) << 1;
+	Id |= (digitalRead(RS485_ADDR_PIN_B_3) ^ 0x01) << 2;
+	Id |= (digitalRead(RS485_ADDR_PIN_B_4) ^ 0x01) << 3;
+	Id |= (digitalRead(RS485_ADDR_PIN_B_5) ^ 0x01) << 4;
+	return Id;
 };
 
-int32_t GetSlaveId() {
-	if (IsMaster()){
-		return 0x00;
-	} else {
-		return 0x01;
+bool IsMaster() {
+	bool ReturnRole = false;
+	if (GetSlaveId() == 0x00){
+		ReturnRole = true;
 	};
+	return ReturnRole;
 };
 
 void PrettyPrintModbusMessage(uint8_t *ModbusMessage, int Length, const char *MessageType) {

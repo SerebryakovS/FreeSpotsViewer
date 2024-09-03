@@ -25,11 +25,18 @@
 
 #define RS485_UART_PORT_A "/dev/ttyS1"
 #define RS485_CTRL_PIN_A             4
-#define RS485_ROLE_LED_B            14
 
 #define RS485_UART_PORT_B "/dev/ttyS2"
 #define RS485_CTRL_PIN_B             5
-#define RS485_ROLE_PIN_B            10
+
+#define RS485_ROLE_LED_B            14
+
+#define RS485_ADDR_PIN_B_1          10
+#define RS485_ADDR_PIN_B_2           8
+#define RS485_ADDR_PIN_B_3           9
+#define RS485_ADDR_PIN_B_4           7
+#define RS485_ADDR_PIN_B_5           2
+
 
 #define CONC_INET_IFACE         "eth0"
 
