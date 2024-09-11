@@ -17,5 +17,6 @@ void StoreSensorDataInMemcached(uint8_t ConcentratorId, SensorData *Data);
 SensorData *ExtractSensorDataFromMemcached(uint8_t ConcentratorId);
 int16_t GetSensorsCount(uint8_t ConcentratorId);
 int16_t GetConcentratorsCount();
+
 #endif
 

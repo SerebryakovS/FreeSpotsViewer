@@ -36,16 +36,6 @@ uint16_t SetupUart(const char *UartPort, speed_t BaudSpeed) {
     return UartPortFd;
 };
 
-#ifdef TEST_MODE
-void SimulateSensorData() {
-    for (uint8_t Idx = 0; Idx < SENSORS_COUNT; ++Idx) {
-        uint8_t sensorValue = rand() % 2;
-        UpdateSensor(Idx, sensorValue);
-    };
-    StoreSensorDataInMemcached(GetSlaveId(), SensorsHead);
-};
-#endif
-
 int32_t main(void) {
     wiringPiSetup();
 	pinMode(RS485_ADDR_PIN_B_1, INPUT); pullUpDnControl(RS485_ADDR_PIN_B_1, PUD_UP);
@@ -73,10 +63,6 @@ int32_t main(void) {
         };
     };
     signal(SIGINT, HandleSigint);
-
-#ifdef TEST_MODE
-    SimulateSensorData();
-#endif
     pthread_create(&ThreadA, NULL, SyncClientsHandler, (void *)&_UartModuleA);
     pthread_create(&ThreadB, NULL, SyncConcentratorsHandler, (void *)&_UartModuleB);
     pthread_join(ThreadA, NULL);

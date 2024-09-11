@@ -1,8 +1,6 @@
 
 #include "sensor.h"
 
-static uint8_t LADDR = SENSOR_ZERO_ADDR + 1;
-
 static inline uint8_t CalculateChecksum(const uint8_t *Data, size_t Length) {
     uint8_t Checksum = 0;
     for (size_t Idx = 0; Idx < Length; ++Idx) {
@@ -87,7 +85,7 @@ void ReadFromSensor(UartModule *_UartModule, uint8_t *ReadBuffer, struct timeval
 };
 
 void SyncAndRead(UartModule *_UartModule, uint8_t *ReadBuffer, struct timeval *Timeout) {
-    const uint8_t Data[] = {LADDR};	
+    const uint8_t Data[] = {GetLaddr()};	
     SendToSensor(_UartModule, 0xFF, CMD_SYNC, Data, 1);
     for (int SlotIdx = 0; SlotIdx < SENSORS_COUNT; ++SlotIdx) {
 		ReadFromSensor(_UartModule, ReadBuffer, Timeout, SlotIdx);
@@ -109,10 +107,7 @@ void SensorsProtoHandler(UartModule *_UartModule, uint8_t SlotIdx, uint8_t *Read
         if (Checksum == CalculatedChecksum) {
             switch (Command) {
                 case CMD_DATA:
-                    if (Address == LADDR) {
-                        LADDR++;
-						break;
-                    };
+					UpdateLaddr(Address);
 					uint8_t SensorValue = ReadBuffer[3];
                     UpdateSensor(Address, SensorValue);
                     break;
