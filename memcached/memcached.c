@@ -100,3 +100,20 @@ int16_t GetConcentratorsCount() {
     memcached_free(Memc);
     return ConcentratorCount;
 };
+
+uint16_t CalculateTotalFreeSensorsCount() {
+    uint16_t FreeSensorsCount = 0;
+    int16_t ConcentratorsCount = GetConcentratorsCount();
+    for (int16_t Idx = 0; Idx < ConcentratorsCount; Idx++) {
+        SensorData *CurrSensor = ExtractSensorDataFromMemcached(Idx);
+        while (CurrSensor != NULL) {
+            if (CurrSensor->Data == 0) {
+                FreeSensorsCount++;
+            };
+            SensorData *NextSensor = CurrSensor->NextSensor;
+            free(CurrSensor);
+            CurrSensor = NextSensor;
+        };
+    };
+    return FreeSensorsCount;
+};

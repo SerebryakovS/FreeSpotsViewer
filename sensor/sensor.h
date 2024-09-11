@@ -23,7 +23,7 @@ void ExtractLaddrEnv();
 void UpdateLaddr(uint8_t Address);
 uint8_t GetLaddr();
 
-uint8_t CalculateFreeSensors( void );
+uint8_t CalculateFreeSensorsCount( void );
 void AddSensor(uint8_t SensorAddress, int8_t SensorValue);
 void RemoveSensor(uint8_t SensorAddress);
 void UpdateSensor(uint8_t SensorAddress, int8_t SensorValue);

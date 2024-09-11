@@ -46,4 +46,7 @@ typedef struct UartModule {
     uint8_t  EnablePin;
 } UartModule;
 
+uint16_t GetSlaveId();
+bool IsMaster();
+
 #endif

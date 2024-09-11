@@ -45,12 +45,16 @@ void ReadFromSensor(UartModule *_UartModule, uint8_t *ReadBuffer, struct timeval
         fprintf(stderr, "Invalid UART file descriptor\n");
         return;
     };
-	uint8_t FreeSpaces = 0;
+	uint16_t FreeSpaces = 0;
 	int16_t ReadCountBytes = 0;
     struct timeval StartTime, EndTime;
 	gettimeofday(&StartTime, NULL);
 	if (SlotIdx == SENSORS_COUNT - 1){
-		FreeSpaces = CalculateFreeSensors();
+		if (IsMaster()) {
+			FreeSpaces = CalculateTotalFreeSensorsCount();
+		} else {
+			FreeSpaces = CalculateFreeSensorsCount();
+		};
 		SendToSensor(_UartModule, DISPLAY_ADDR, CMD_DISP, &FreeSpaces, 1);
 	} else {
 		fd_set ReadFds;

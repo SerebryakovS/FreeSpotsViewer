@@ -74,7 +74,7 @@ void CheckInactiveSensors(uint8_t MaxInactivity) {
     };
 };
 
-uint8_t CalculateFreeSensors() {
+uint8_t CalculateFreeSensorsCount() {
     uint8_t FreeSpaces = 0;
     SensorData *CurrSensor = SensorsHead;
     while (CurrSensor != NULL) {

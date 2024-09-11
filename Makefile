@@ -5,7 +5,7 @@ CFLAGS = $(INCLUDES) $(LIBRARIES) -Wall -Wextra -O2
 
 SRC_DIR = .
 SRC_FILES = $(SRC_DIR)/main.c $(SRC_DIR)/sensor.c $(SRC_DIR)/concentrator.c
-MODBUS_SRC_FILES = modbus/modbus_master.c modbus/modbus_slave.c modbus/modbus_helpers.c
+MODBUS_SRC_FILES = modbus/modbus_master.c modbus/modbus_slave.c modbus/modbus_helpers.c config/config.c
 SENSOR_SRC_FILES = sensor/sensor_buffer.c sensor/sensor_proto.c sensor/sensor_laddr.c
 MEMCACHED_SRC_FILES = memcached/memcached.c
 WEB_SRC_FILES = web/web_server.c web/web_handlers.c 
