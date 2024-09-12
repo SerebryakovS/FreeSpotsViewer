@@ -42,8 +42,8 @@ int32_t main(void) {
 	pinMode(RS485_ADDR_PIN_B_2, INPUT); pullUpDnControl(RS485_ADDR_PIN_B_2, PUD_UP);
 	pinMode(RS485_ADDR_PIN_B_3, INPUT); pullUpDnControl(RS485_ADDR_PIN_B_3, PUD_UP);
 	pinMode(RS485_ADDR_PIN_B_4, INPUT); pullUpDnControl(RS485_ADDR_PIN_B_4, PUD_UP);
-	pinMode(RS485_ADDR_PIN_B_5, INPUT); pullUpDnControl(RS485_ADDR_PIN_B_5, PUD_UP);	
-    _UartModuleA.PortId = 'A';
+	pinMode(RS485_ADDR_PIN_B_5, INPUT); pullUpDnControl(RS485_ADDR_PIN_B_5, PUD_UP);		
+	_UartModuleA.PortId = 'A';
     _UartModuleA.EnablePin = RS485_CTRL_PIN_A;
     pinMode(_UartModuleA.EnablePin, OUTPUT);
     digitalWrite(_UartModuleA.EnablePin, LOW);

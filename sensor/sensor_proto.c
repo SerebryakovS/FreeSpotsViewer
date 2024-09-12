@@ -55,7 +55,7 @@ void ReadFromSensor(UartModule *_UartModule, uint8_t *ReadBuffer, struct timeval
 		} else {
 			FreeSpaces = CalculateFreeSensorsCount();
 		};
-		SendToSensor(_UartModule, DISPLAY_ADDR, CMD_DISP, &FreeSpaces, 1);
+		SendToSensor(_UartModule, DISPLAY_ADDR, CMD_DISP, &FreeSpaces, 2);
 	} else {
 		fd_set ReadFds;
 		FD_ZERO(&ReadFds);
