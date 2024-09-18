@@ -7,6 +7,7 @@
 
 #define SENSOR_ZERO_ADDR             1
 #define DISPLAY_ADDR   SENSORS_COUNT-1
+#define SENSOR_MAX_ADDR	DISPLAY_ADDR-1
 #define SYNC_INTERVAL        1000000UL
 #define MSG_START				  0xA0
 #define MSG_END				      0xAF
@@ -22,7 +23,8 @@ extern SensorData *SensorsHead;
 void ExtractLaddrEnv();
 void UpdateLaddr(uint8_t Address);
 uint8_t GetLaddr();
-
+uint8_t PopSensorIdsGap();
+bool IsSensorAddressBusy(uint8_t SensorAddress);
 uint16_t CalculateFreeSensorsCount( void );
 void AddSensor(uint8_t SensorAddress, int8_t SensorValue);
 void RemoveSensor(uint8_t SensorAddress);

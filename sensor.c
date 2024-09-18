@@ -10,7 +10,7 @@ void *SyncClientsHandler(void *Arguments) {
     Timeout.tv_sec  = 0;
     Timeout.tv_usec = SlotTimeUs;
 	ExtractLaddrEnv();
-    while (1) {
+	while (1) {
         SyncAndRead(_UartModule, ReadBuffer, &Timeout);
         StoreSensorDataInMemcached(GetSlaveId(), SensorsHead);
     };

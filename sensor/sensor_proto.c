@@ -79,10 +79,12 @@ void ReadFromSensor(UartModule *_UartModule, uint8_t *ReadBuffer, struct timeval
 		ElapsedUsRw = EndTime.tv_usec - StartTime.tv_usec;
 		fprintf(stdout, "SlotIdx: %d, Received packet: %s, ElapsedUsRd: %d, ElapsedUsRw: %d\n", SlotIdx, HexBuffer, ElapsedUsRd, ElapsedUsRw);        
     };
-	if ( ElapsedUsRd < SlotTimeUs ) {
-		if (SlotIdx != SENSORS_COUNT - 1){
+	if (SlotIdx != SENSORS_COUNT - 1){
+		if ( ElapsedUsRw < SlotTimeUs ) {
 			usleep(SlotTimeUs - ElapsedUsRw);
-		} else {
+		};
+	} else {
+		if ( ElapsedUsRd < SlotTimeUs ) {
 			usleep(SlotTimeUs - ElapsedUsRd);
 		};
 	};
@@ -93,7 +95,7 @@ void SyncAndRead(UartModule *_UartModule, uint8_t *ReadBuffer, struct timeval *T
     SendToSensor(_UartModule, 0xFF, CMD_SYNC, Data, 1);
     for (int SlotIdx = 0; SlotIdx < SENSORS_COUNT; ++SlotIdx) {
 		ReadFromSensor(_UartModule, ReadBuffer, Timeout, SlotIdx);
-    };	
+    };
     CheckInactiveSensors(5);
 };
 

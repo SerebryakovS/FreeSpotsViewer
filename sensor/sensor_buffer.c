@@ -86,4 +86,29 @@ uint16_t CalculateFreeSensorsCount() {
     return FreeSpaces;
 };
 
+uint8_t PopSensorIdsGap() {
+	SensorData *CurrSensor = SensorsHead;
+	uint8_t PrevAddress = 0;
+	uint8_t WhiteSpace  = 0;
+	while (CurrSensor != NULL) {
+		if (PrevAddress != 0 && CurrSensor->Address > (PrevAddress + 1)) {
+			WhiteSpace = PrevAddress + 1;
+			return WhiteSpace; 
+		};
+		PrevAddress = CurrSensor->Address;
+		CurrSensor = CurrSensor->NextSensor;
+	};
+	return 0;
+};
+
+bool IsSensorAddressBusy(uint8_t SensorAddress) {
+    SensorData *CurrSensor = SensorsHead;
+    while (CurrSensor != NULL) {
+        if (CurrSensor->Address == SensorAddress) {
+            return true;
+        };
+        CurrSensor = CurrSensor->NextSensor;
+    };
+    return false;
+}
 //////////////////////////////////////////////////////////////////////////////////
